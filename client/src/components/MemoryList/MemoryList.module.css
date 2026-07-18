@@ -1,0 +1,18 @@
+.list {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.heading {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #1a1a1a;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #999;
+  margin: 0 0 24px;
+}
