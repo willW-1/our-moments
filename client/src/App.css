@@ -56,6 +56,18 @@ body {
   background: rgba(233, 30, 99, 0.08);
 }
 
+/* ===== 加载 / 错误状态 ===== */
+.app-status {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 15px;
+  color: #888;
+}
+
+.app-error {
+  color: #c62828;
+}
+
 /* ===== FAB ===== */
 .fab {
   position: fixed;

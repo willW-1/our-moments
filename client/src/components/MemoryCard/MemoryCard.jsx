@@ -1,12 +1,23 @@
 import styles from './MemoryCard.module.css';
 
 const TYPE_ICONS = {
+  // 英文键（兼容旧 mock 数据）
   date: '💕',
   travel: '✈️',
   gift: '🎁',
   movie: '🎬',
   variety: '📺',
   other: '📌',
+  // 中文键（数据库真实数据）
+  约会: '💕',
+  旅游: '✈️',
+  旅行: '✈️',
+  礼物: '🎁',
+  电影: '🎬',
+  综艺: '📺',
+  演唱会: '🎫',
+  演出: '🎫',
+  其他: '📌',
 };
 
 function MemoryCard({ memory }) {
