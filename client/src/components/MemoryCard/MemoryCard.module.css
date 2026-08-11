@@ -47,6 +47,15 @@
   margin: 0 0 8px;
 }
 
+.author {
+  font-size: 13px;
+  color: #c2185b;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .location {
   font-size: 13px;
   color: #888;

@@ -10,7 +10,7 @@ const TYPE_ICONS = {
 };
 
 function MemoryCard({ memory }) {
-  const { type, title, date, location, description, imageUrl } = memory;
+  const { type, title, date, location, description, imageUrl, author } = memory;
   const icon = TYPE_ICONS[type] || TYPE_ICONS.other;
 
   const formatDate = (dateStr) => {
@@ -30,6 +30,9 @@ function MemoryCard({ memory }) {
         <div className={styles.content}>
           <h3 className={styles.title}>{title}</h3>
           <p className={styles.date}>{formatDate(date)}</p>
+          {author && (
+            <p className={styles.author}>👤 {author}</p>
+          )}
           {location && (
             <p className={styles.location}>📍 {location}</p>
           )}

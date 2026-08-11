@@ -24,13 +24,15 @@ app.get('/api/memories', async (req, res) => {
   try {
     const memories = await prisma.memory.findMany({
       orderBy: { date: 'desc' },
+      include: { user: { select: { username: true } } },
     });
-    // 数据库使用 snake_case，映射回前端 camelCase
+    // 数据库使用 snake_case，映射回前端 camelCase；user 联表带出发帖人
     res.json(
-      memories.map(({ image_url, created_at, ...rest }) => ({
+      memories.map(({ image_url, created_at, user, ...rest }) => ({
         ...rest,
         imageUrl: image_url,
         createdAt: created_at,
+        author: user?.username ?? null,
       }))
     );
   } catch (err) {
