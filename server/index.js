@@ -101,6 +101,84 @@ app.post('/api/memories', requireAuth, async (req, res) => {
   }
 });
 
+// 更新一条 memory（需登录，仅作者可改）
+// body: { type, title, date, location?, description?, imageUrl? }
+app.put('/api/memories/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: '无效的 id' });
+    }
+
+    const existing = await prisma.memory.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: '记录不存在' });
+    }
+    if (existing.user_id !== req.user.userId) {
+      return res.status(403).json({ error: '只能修改自己的记录' });
+    }
+
+    const { type, title, date, location, description, imageUrl } = req.body || {};
+    if (!type || !title || !date) {
+      return res.status(400).json({ error: 'type、title、date 为必填字段' });
+    }
+
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ error: 'date 格式无效' });
+    }
+
+    const memory = await prisma.memory.update({
+      where: { id },
+      data: {
+        type,
+        title,
+        date: parsedDate,
+        location: location ?? null,
+        description: description ?? null,
+        image_url: imageUrl ?? null,
+      },
+      include: { user: { select: { username: true } } },
+    });
+
+    // 与 GET / POST 一致的字段映射
+    const { image_url, created_at, user, ...rest } = memory;
+    res.json({
+      ...rest,
+      imageUrl: image_url,
+      createdAt: created_at,
+      author: user?.username ?? null,
+    });
+  } catch (err) {
+    console.error('更新 memory 失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 删除一条 memory（需登录，仅作者可删）
+app.delete('/api/memories/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: '无效的 id' });
+    }
+
+    const existing = await prisma.memory.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: '记录不存在' });
+    }
+    if (existing.user_id !== req.user.userId) {
+      return res.status(403).json({ error: '只能删除自己的记录' });
+    }
+
+    await prisma.memory.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('删除 memory 失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
 // 登录：Prisma 查用户 + bcrypt 验证密码，成功返回 token
 app.post('/api/login', async (req, res) => {
   try {
