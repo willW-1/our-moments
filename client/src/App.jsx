@@ -1,20 +1,42 @@
 import { useEffect, useState } from 'react';
 import './App.css';
+import Login from './Login';
 import MemoryList from './components/MemoryList/MemoryList';
-
-// 后端 API 地址：
-//  - 本地开发（vite dev）：走 vite 代理到 localhost:3001
-//  - 生产构建：默认 Render，可用 VITE_API_URL 覆盖（构建时注入）
-const API_BASE = import.meta.env.DEV
-  ? ''
-  : (import.meta.env.VITE_API_URL || 'https://our-moments-a8no.onrender.com');
+import { API_BASE, fetchMe } from './api';
 
 function App() {
+  // 登录状态：checking（正在验证 token）/ loggedIn / loggedOut
+  const [authState, setAuthState] = useState('checking');
   const [memories, setMemories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // 1) 启动时检查 localStorage 的 token，并用 /api/me 验证；无效则清除
   useEffect(() => {
+    let cancelled = false;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setAuthState('loggedOut');
+      return;
+    }
+    fetchMe(token)
+      .then(() => {
+        if (!cancelled) setAuthState('loggedIn');
+      })
+      .catch(() => {
+        if (!cancelled) {
+          localStorage.removeItem('token');
+          setAuthState('loggedOut');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 2) 登录后才加载 memories
+  useEffect(() => {
+    if (authState !== 'loggedIn') return;
     let cancelled = false;
     fetch(`${API_BASE}/api/memories`)
       .then((res) => {
@@ -34,11 +56,21 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authState]);
 
-  const handleAddClick = () => {
-    alert('即将上线');
+  const handleLoggedIn = () => {
+    // 登录成功后刷新，让 App 重新走一遍 token 校验流程
+    window.location.reload();
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setAuthState('loggedOut');
+  };
+
+  if (authState === 'loggedOut') {
+    return <Login onLoginSuccess={handleLoggedIn} />;
+  }
 
   return (
     <div className="app">
@@ -46,11 +78,17 @@ function App() {
         <span className="app-logo">💝</span>
         <span className="app-title">Our Moments</span>
         <span className="app-nav">我们的故事</span>
+        {authState === 'loggedIn' && (
+          <span className="app-logout" onClick={handleLogout}>退出</span>
+        )}
       </header>
-      {loading && <p className="app-status">加载中…</p>}
-      {error && <p className="app-status app-error">{error}</p>}
-      {!loading && !error && <MemoryList memories={memories} />}
-      <button className="fab" onClick={handleAddClick} title="添加回忆">+</button>
+      {authState === 'checking' && <p className="app-status">加载中…</p>}
+      {authState === 'loggedIn' && loading && <p className="app-status">加载中…</p>}
+      {authState === 'loggedIn' && error && <p className="app-status app-error">{error}</p>}
+      {authState === 'loggedIn' && !loading && !error && <MemoryList memories={memories} />}
+      {authState === 'loggedIn' && (
+        <button className="fab" onClick={() => alert('即将上线')} title="添加回忆">+</button>
+      )}
     </div>
   );
 }
