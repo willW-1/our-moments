@@ -1,21 +1,21 @@
 import MemoryForm from './MemoryForm';
-import { createMemory } from './api';
+import { updateMemory } from './api';
 
-function AddMemory({ onClose, onCreated }) {
+function EditMemory({ memory, onClose, onUpdated }) {
   return (
     <MemoryForm
-      heading="添加回忆"
-      submitLabel="保存"
-      initial={null}
+      heading="编辑回忆"
+      submitLabel="保存修改"
+      initial={memory}
       onClose={onClose}
       onSubmit={async (data) => {
         const token = localStorage.getItem('token');
         if (!token) throw new Error('登录状态已失效，请重新登录');
-        await createMemory(token, data);
-        onCreated();
+        await updateMemory(token, memory.id, data);
+        onUpdated();
       }}
     />
   );
 }
 
-export default AddMemory;
+export default EditMemory;

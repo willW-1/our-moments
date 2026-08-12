@@ -11,6 +11,34 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.14);
 }
 
+/* 编辑/删除按钮（仅作者可见，右上角） */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.actionBtn {
+  border: none;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  background: #fce4ec;
+  color: #c2185b;
+}
+
+.actionBtn:hover {
+  opacity: 0.8;
+}
+
+.deleteBtn {
+  background: #ffebee;
+  color: #c62828;
+}
+
 .inner {
   display: flex;
   gap: 16px;

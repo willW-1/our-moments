@@ -20,9 +20,11 @@ const TYPE_ICONS = {
   其他: '📌',
 };
 
-function MemoryCard({ memory }) {
+function MemoryCard({ memory, currentUsername, onEdit, onDelete }) {
   const { type, title, date, location, description, imageUrl, author } = memory;
   const icon = TYPE_ICONS[type] || TYPE_ICONS.other;
+  // 只有自己发出的卡片才显示 编辑/删除 按钮
+  const isOwner = Boolean(author) && author === currentUsername;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -36,6 +38,24 @@ function MemoryCard({ memory }) {
 
   return (
     <div className={styles.card}>
+      {isOwner && (
+        <div className={styles.actions}>
+          <button
+            className={styles.actionBtn}
+            onClick={() => onEdit(memory)}
+            title="编辑这条回忆"
+          >
+            编辑
+          </button>
+          <button
+            className={`${styles.actionBtn} ${styles.deleteBtn}`}
+            onClick={() => onDelete(memory)}
+            title="删除这条回忆"
+          >
+            删除
+          </button>
+        </div>
+      )}
       <div className={styles.inner}>
         <div className={styles.iconArea}>{icon}</div>
         <div className={styles.content}>

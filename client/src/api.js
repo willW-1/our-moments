@@ -67,3 +67,47 @@ export async function createMemory(token, data) {
   }
   return result;
 }
+
+// 更新一条 memory（需登录，仅作者），成功返回更新后的 memory
+export async function updateMemory(token, id, data) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/memories/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+// 删除一条 memory（需登录，仅作者），成功返回 { success }
+export async function deleteMemory(token, id) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/memories/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}

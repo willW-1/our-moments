@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import Login from './Login';
 import AddMemory from './AddMemory';
+import EditMemory from './EditMemory';
 import MemoryList from './components/MemoryList/MemoryList';
-import { fetchMe, fetchMemories } from './api';
+import { fetchMe, fetchMemories, deleteMemory } from './api';
 
 function App() {
   // 登录状态：checking（正在验证 token）/ loggedIn / loggedOut
@@ -14,6 +15,9 @@ function App() {
   // 添加回忆弹窗 & 列表刷新开关（每次 +1 触发重新拉取）
   const [showAdd, setShowAdd] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  // 当前登录用户名（用于判断卡片是否可编辑/删除）& 正在编辑的 memory
+  const [username, setUsername] = useState('');
+  const [editingMemory, setEditingMemory] = useState(null);
 
   // 1) 启动时检查 localStorage 的 token，并用 /api/me 验证；无效则清除
   useEffect(() => {
@@ -24,8 +28,11 @@ function App() {
       return;
     }
     fetchMe(token)
-      .then(() => {
-        if (!cancelled) setAuthState('loggedIn');
+      .then((data) => {
+        if (!cancelled) {
+          setUsername(data.username);
+          setAuthState('loggedIn');
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -73,6 +80,24 @@ function App() {
     setAuthState('loggedOut');
   };
 
+  const handleEdit = (memory) => setEditingMemory(memory);
+
+  const handleDelete = async (memory) => {
+    const ok = window.confirm(`确定删除「${memory.title}」这条回忆吗？删除后无法恢复。`);
+    if (!ok) return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('登录状态已失效，请重新登录');
+      return;
+    }
+    try {
+      await deleteMemory(token, memory.id);
+      setRefreshKey((k) => k + 1); // 刷新列表
+    } catch (err) {
+      alert(err.message || '删除失败，请稍后再试');
+    }
+  };
+
   if (authState === 'loggedOut') {
     return <Login onLoginSuccess={handleLoggedIn} />;
   }
@@ -90,7 +115,14 @@ function App() {
       {authState === 'checking' && <p className="app-status">加载中…</p>}
       {authState === 'loggedIn' && loading && <p className="app-status">加载中…</p>}
       {authState === 'loggedIn' && error && <p className="app-status app-error">{error}</p>}
-      {authState === 'loggedIn' && !loading && !error && <MemoryList memories={memories} />}
+      {authState === 'loggedIn' && !loading && !error && (
+        <MemoryList
+          memories={memories}
+          currentUsername={username}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
       {authState === 'loggedIn' && (
         <button className="fab" onClick={() => setShowAdd(true)} title="添加回忆">+</button>
       )}
@@ -99,6 +131,16 @@ function App() {
           onClose={() => setShowAdd(false)}
           onCreated={() => {
             setShowAdd(false);
+            setRefreshKey((k) => k + 1); // 刷新记忆列表
+          }}
+        />
+      )}
+      {authState === 'loggedIn' && editingMemory && (
+        <EditMemory
+          memory={editingMemory}
+          onClose={() => setEditingMemory(null)}
+          onUpdated={() => {
+            setEditingMemory(null);
             setRefreshKey((k) => k + 1); // 刷新记忆列表
           }}
         />
