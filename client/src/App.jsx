@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import Login from './Login';
+import AddMemory from './AddMemory';
 import MemoryList from './components/MemoryList/MemoryList';
-import { API_BASE, fetchMe } from './api';
+import { fetchMe, fetchMemories } from './api';
 
 function App() {
   // 登录状态：checking（正在验证 token）/ loggedIn / loggedOut
@@ -10,6 +11,9 @@ function App() {
   const [memories, setMemories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // 添加回忆弹窗 & 列表刷新开关（每次 +1 触发重新拉取）
+  const [showAdd, setShowAdd] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // 1) 启动时检查 localStorage 的 token，并用 /api/me 验证；无效则清除
   useEffect(() => {
@@ -34,15 +38,16 @@ function App() {
     };
   }, []);
 
-  // 2) 登录后才加载 memories
+  // 2) 登录后才加载 memories（携带 token，因为 GET /api/memories 需要认证）
   useEffect(() => {
     if (authState !== 'loggedIn') return;
     let cancelled = false;
-    fetch(`${API_BASE}/api/memories`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setAuthState('loggedOut');
+      return;
+    }
+    fetchMemories(token)
       .then((data) => {
         if (!cancelled) setMemories(Array.isArray(data) ? data : []);
       })
@@ -56,7 +61,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [authState]);
+  }, [authState, refreshKey]);
 
   const handleLoggedIn = () => {
     // 登录成功后刷新，让 App 重新走一遍 token 校验流程
@@ -87,7 +92,16 @@ function App() {
       {authState === 'loggedIn' && error && <p className="app-status app-error">{error}</p>}
       {authState === 'loggedIn' && !loading && !error && <MemoryList memories={memories} />}
       {authState === 'loggedIn' && (
-        <button className="fab" onClick={() => alert('即将上线')} title="添加回忆">+</button>
+        <button className="fab" onClick={() => setShowAdd(true)} title="添加回忆">+</button>
+      )}
+      {authState === 'loggedIn' && showAdd && (
+        <AddMemory
+          onClose={() => setShowAdd(false)}
+          onCreated={() => {
+            setShowAdd(false);
+            setRefreshKey((k) => k + 1); // 刷新记忆列表
+          }}
+        />
       )}
     </div>
   );

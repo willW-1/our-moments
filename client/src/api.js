@@ -34,3 +34,36 @@ export async function fetchMe(token) {
   if (!res.ok) throw new Error('token 无效');
   return res.json();
 }
+
+// 获取 memories 列表（需登录，携带 token）
+export async function fetchMemories(token) {
+  const res = await fetch(`${API_BASE}/api/memories`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// 创建一条 memory（需登录），成功返回新建的 memory
+export async function createMemory(token, data) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/memories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
