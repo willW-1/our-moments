@@ -15,8 +15,7 @@ function App() {
   // 添加回忆弹窗 & 列表刷新开关（每次 +1 触发重新拉取）
   const [showAdd, setShowAdd] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  // 当前登录用户名（用于判断卡片是否可编辑/删除）& 正在编辑的 memory
-  const [username, setUsername] = useState('');
+  // 正在编辑的 memory
   const [editingMemory, setEditingMemory] = useState(null);
 
   // 1) 启动时检查 localStorage 的 token，并用 /api/me 验证；无效则清除
@@ -28,11 +27,8 @@ function App() {
       return;
     }
     fetchMe(token)
-      .then((data) => {
-        if (!cancelled) {
-          setUsername(data.username);
-          setAuthState('loggedIn');
-        }
+      .then(() => {
+        if (!cancelled) setAuthState('loggedIn');
       })
       .catch(() => {
         if (!cancelled) {
@@ -118,7 +114,6 @@ function App() {
       {authState === 'loggedIn' && !loading && !error && (
         <MemoryList
           memories={memories}
-          currentUsername={username}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
