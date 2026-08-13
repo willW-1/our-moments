@@ -42,15 +42,28 @@ app.get('/api/memories', requireAuth, async (req, res) => {
   try {
     const memories = await prisma.memory.findMany({
       orderBy: { date: 'desc' },
-      include: { user: { select: { username: true } } },
+      include: {
+        user: { select: { username: true } },
+        comments: {
+          orderBy: { created_at: 'asc' },
+          include: { user: { select: { username: true } } },
+        },
+      },
     });
-    // 数据库使用 snake_case，映射回前端 camelCase；user 联表带出发帖人
+    // 数据库使用 snake_case，映射回前端 camelCase；user 联表带出帖子/评论的作者
     res.json(
-      memories.map(({ image_url, created_at, user, ...rest }) => ({
+      memories.map(({ image_url, created_at, user, comments, ...rest }) => ({
         ...rest,
         imageUrl: image_url,
         createdAt: created_at,
         author: user?.username ?? null,
+        comments: (comments || []).map((c) => ({
+          id: c.id,
+          content: c.content,
+          createdAt: c.created_at,
+          updatedAt: c.updated_at,
+          author: c.user?.username ?? null, // 这条评论是谁发的
+        })),
       }))
     );
   } catch (err) {
@@ -101,7 +114,7 @@ app.post('/api/memories', requireAuth, async (req, res) => {
   }
 });
 
-// 更新一条 memory（需登录，仅作者可改）
+// 更新一条 memory（需登录；权限已开放，任何登录用户都可改）
 // body: { type, title, date, location?, description?, imageUrl? }
 app.put('/api/memories/:id', requireAuth, async (req, res) => {
   try {
@@ -113,9 +126,6 @@ app.put('/api/memories/:id', requireAuth, async (req, res) => {
     const existing = await prisma.memory.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ error: '记录不存在' });
-    }
-    if (existing.user_id !== req.user.userId) {
-      return res.status(403).json({ error: '只能修改自己的记录' });
     }
 
     const { type, title, date, location, description, imageUrl } = req.body || {};
@@ -155,7 +165,7 @@ app.put('/api/memories/:id', requireAuth, async (req, res) => {
   }
 });
 
-// 删除一条 memory（需登录，仅作者可删）
+// 删除一条 memory（需登录；权限已开放，任何登录用户都可删）
 app.delete('/api/memories/:id', requireAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -167,14 +177,111 @@ app.delete('/api/memories/:id', requireAuth, async (req, res) => {
     if (!existing) {
       return res.status(404).json({ error: '记录不存在' });
     }
-    if (existing.user_id !== req.user.userId) {
-      return res.status(403).json({ error: '只能删除自己的记录' });
-    }
 
     await prisma.memory.delete({ where: { id } });
     res.json({ success: true });
   } catch (err) {
     console.error('删除 memory 失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// ===== 评论 =====
+
+// 创建一条评论（需登录），body: { content }
+app.post('/api/memories/:id/comments', requireAuth, async (req, res) => {
+  try {
+    const memoryId = parseInt(req.params.id, 10);
+    if (isNaN(memoryId)) {
+      return res.status(400).json({ error: '无效的 id' });
+    }
+
+    const memory = await prisma.memory.findUnique({ where: { id: memoryId } });
+    if (!memory) {
+      return res.status(404).json({ error: '记录不存在' });
+    }
+
+    const { content } = req.body || {};
+    if (!content || !String(content).trim()) {
+      return res.status(400).json({ error: '评论内容不能为空' });
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        content: String(content).trim(),
+        memory_id: memoryId,
+        user_id: req.user.userId,
+      },
+      include: { user: { select: { username: true } } },
+    });
+
+    res.status(201).json({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.created_at,
+      updatedAt: comment.updated_at,
+      author: comment.user?.username ?? null, // 这条评论是谁发的
+    });
+  } catch (err) {
+    console.error('创建评论失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 编辑评论（需登录；权限已开放，任何登录用户都可改），body: { content }
+app.put('/api/comments/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: '无效的 id' });
+    }
+
+    const existing = await prisma.comment.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: '评论不存在' });
+    }
+
+    const { content } = req.body || {};
+    if (!content || !String(content).trim()) {
+      return res.status(400).json({ error: '评论内容不能为空' });
+    }
+
+    const comment = await prisma.comment.update({
+      where: { id },
+      data: { content: String(content).trim() },
+      include: { user: { select: { username: true } } },
+    });
+
+    res.json({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.created_at,
+      updatedAt: comment.updated_at,
+      author: comment.user?.username ?? null,
+    });
+  } catch (err) {
+    console.error('编辑评论失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 删除评论（需登录；权限已开放，任何登录用户都可删）
+app.delete('/api/comments/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: '无效的 id' });
+    }
+
+    const existing = await prisma.comment.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: '评论不存在' });
+    }
+
+    await prisma.comment.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('删除评论失败:', err);
     res.status(500).json({ error: '服务器内部错误' });
   }
 });
