@@ -41,7 +41,8 @@ app.get('/api/hello', (req, res) => {
 app.get('/api/memories', requireAuth, async (req, res) => {
   try {
     const memories = await prisma.memory.findMany({
-      orderBy: { date: 'desc' },
+      // 先按发生日期降序；发生日期相同则按发布时间降序
+      orderBy: [{ date: 'desc' }, { created_at: 'desc' }],
       include: {
         user: { select: { username: true } },
         comments: {
