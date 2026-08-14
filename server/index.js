@@ -15,14 +15,23 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Filebase 私有桶：<img> 不能匿名读，服务器给每个图片签发一个带签名、可直接在浏览器打开的 GET 直链。
-// 图片仍直接从 Filebase CDN 加载（不经过 Render）；URL 7 天过期，前端重新拉列表即可刷新。
+// 图片仍直接从 Filebase CDN 加载（不经过 Render）。URL 按 key 缓存、7 天内保持不变：
+// 如果每次请求都重新签名，URL 就会每次都变，浏览器缓存永远失效，用户每次登录都要重新下载全部图片。
+const signedUrlCache = new Map(); // image_key -> { url, expiresAt }
+const SIGNED_URL_TTL_SEC = 7 * 24 * 60 * 60;
+
 async function signedImageUrl(key) {
   if (!key || !bucket) return null;
-  return getSignedUrl(
+  const cached = signedUrlCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.url;
+  const url = await getSignedUrl(
     s3,
     new GetObjectCommand({ Bucket: bucket, Key: key }),
-    { expiresIn: 7 * 24 * 60 * 60 }
+    { expiresIn: SIGNED_URL_TTL_SEC }
   );
+  // 缓存 6 天，比 URL 有效期提前 1 天重建，避免浏览器缓存到即将过期的地址
+  signedUrlCache.set(key, { url, expiresAt: Date.now() + 6 * 24 * 60 * 60 * 1000 });
+  return url;
 }
 
 // 生成浏览器直传用的 presigned PUT URL（5 分钟有效）。签名覆盖 Content-Type，
@@ -326,9 +335,9 @@ app.delete('/api/comments/:id', requireAuth, async (req, res) => {
 //
 // Filebase 是标准 S3（SigV4，无 UA 校验）。bucket 是私有的，方案：
 //   1) 登录后向 /api/upload 要一个 presigned PUT URL（5 分钟有效）
-//   2) 浏览器把文件直接 PUT 到 https://s3.filebase.com（直传，不经过 Render）
+//   2) 浏览器把文件直接 PUT 到 https://s3.filebase.io（直传，不经过 Render）
 //   3) 读取时服务器给每个 image_key 签发 7 天有效的签名 GET URL（signedImageUrl），
-//      <img> 直接从 Filebase CDN 加载（仍不经过 Render），URL 过期后前端重新拉列表即可刷新
+//      URL 按 key 缓存、7 天内不变，浏览器能跨登录复用图片缓存，不必每次登录重下。
 
 // 生成直传地址（需登录）：body: { contentType?, fileName? }
 // 返回 { key, contentType, uploadUrl, getUrl } —— uploadUrl 用于浏览器直接 PUT，getUrl 是签名直链（预览用）

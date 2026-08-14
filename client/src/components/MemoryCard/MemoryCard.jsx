@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import styles from './MemoryCard.module.css';
 import Comments from '../Comments/Comments';
 import { formatRelativeTime } from '../../formatTime';
@@ -26,6 +27,18 @@ const TYPE_ICONS = {
 function MemoryCard({ memory, onEdit, onDelete }) {
   const { type, title, date, location, description, imageUrl, author, createdAt, comments } = memory;
   const icon = TYPE_ICONS[type] || TYPE_ICONS.other;
+  // 点击图片放大（lightbox）：点遮罩或 ✕ 关闭
+  const [zoomed, setZoomed] = useState(false);
+
+  // 打开放大时按 Esc 也可关闭
+  useEffect(() => {
+    if (!zoomed) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setZoomed(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [zoomed]);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -73,12 +86,33 @@ function MemoryCard({ memory, onEdit, onDelete }) {
         </div>
       </div>
       {imageUrl && (
-        <img
-          className={styles.image}
-          src={resolveImageUrl(imageUrl)}
-          alt={title}
-          onError={(e) => { e.target.style.display = 'none'; }}
-        />
+        <>
+          <img
+            className={styles.image}
+            src={resolveImageUrl(imageUrl)}
+            alt={title}
+            onClick={() => setZoomed(true)}
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          {zoomed && (
+            <div className={styles.zoomOverlay} onClick={() => setZoomed(false)}>
+              <img
+                className={styles.zoomImage}
+                src={resolveImageUrl(imageUrl)}
+                alt={title}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                type="button"
+                className={styles.zoomClose}
+                onClick={() => setZoomed(false)}
+                aria-label="关闭"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </>
       )}
       <Comments memoryId={memory.id} comments={comments} />
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { uploadImage, resolveImageUrl } from './api';
 import styles from './MemoryForm.module.css';
 
@@ -9,6 +9,7 @@ const TYPE_OPTIONS = ['约会', '旅游', '旅行', '电影', '演唱会', '演�
 // initial 为 null 表示新建；传 memory 对象则预填（编辑模式）
 // onSubmit(payload) 应返回 Promise，resolve 后自动关闭弹窗
 function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
+  const fileInputId = useId();
   const [type, setType] = useState(initial?.type || '约会');
   const [title, setTitle] = useState(initial?.title || '');
   const [date, setDate] = useState(initial?.date ? initial.date.slice(0, 10) : '');
@@ -155,8 +156,10 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
         <label className={styles.label}>
           图片
           <div className={styles.uploadArea}>
+            {/* 原生 file input 视觉隐藏：避免浏览器自带的「未选择任何文件」小字，改由下方 label 按钮触发 */}
             <input
-              className={styles.fileInput}
+              id={fileInputId}
+              className={styles.hiddenInput}
               type="file"
               accept="image/*"
               onChange={handleFileChange}
@@ -179,7 +182,10 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
                 </button>
               </>
             ) : (
-              <span className={styles.uploadHint}>选择本地图片直传到 Filebase（不经过 Render）</span>
+              <>
+                <label htmlFor={fileInputId} className={styles.fileButton}>选择图片</label>
+                <span className={styles.uploadHint}>选择本地图片直传到 Filebase（不经过 Render）</span>
+              </>
             )}
           </div>
           {uploadError && <p className={styles.uploadError}>{uploadError}</p>}

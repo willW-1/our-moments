@@ -83,17 +83,37 @@
   text-align: center;
 }
 
-.fileInput {
-  display: block;
-  width: 100%;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
+/* 原生 file input 视觉隐藏（仍可被 label 触发），避免显示「未选择任何文件」小字 */
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.fileInput:disabled {
+.hiddenInput:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+}
+
+/* 「选择图片」按钮（label，点击触发隐藏的 file input） */
+.fileButton {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #e91e63, #c2185b);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.fileButton:hover {
+  opacity: 0.9;
 }
 
 .uploadHint {
