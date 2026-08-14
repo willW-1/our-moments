@@ -73,6 +73,51 @@
   margin: 0 0 12px;
 }
 
+/* 图片上传 */
+.uploadArea {
+  margin-top: 6px;
+  padding: 12px;
+  border: 1px dashed #e0a5bd;
+  border-radius: 10px;
+  background: #fff5f8;
+  text-align: center;
+}
+
+.fileInput {
+  display: block;
+  width: 100%;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+}
+
+.fileInput:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.uploadHint {
+  display: block;
+  font-size: 12px;
+  color: #c2185b;
+  margin-top: 6px;
+}
+
+.preview {
+  display: block;
+  max-width: 100%;
+  max-height: 180px;
+  margin-top: 8px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.uploadError {
+  color: #c62828;
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
 .actions {
   display: flex;
   gap: 12px;

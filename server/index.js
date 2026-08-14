@@ -3,12 +3,26 @@ const cors = require('cors');
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const path = require('path');
+const { PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { s3, bucket } = require('./s3');
 
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// 图片上传：内存暂存 + 限 10MB + 只收图片
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype && file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('只能上传图片文件'));
+  },
+});
 
 // 登录 token → 用户 的映射（内存版，进程重启即失效，后续可换 Redis / JWT）
 const tokenStore = new Map();
@@ -285,6 +299,72 @@ app.delete('/api/comments/:id', requireAuth, async (req, res) => {
     console.error('删除评论失败:', err);
     res.status(500).json({ error: '服务器内部错误' });
   }
+});
+
+// ===== 图片上传（中国科技云数据胶囊 S3） =====
+
+// 上传图片（需登录）：multipart 表单里 field 名为 image，返回可在前端直接用的 imageUrl
+app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) => {
+  if (!bucket) {
+    return res.status(500).json({ error: '服务端未配置数据胶囊（CSTCLOUD_BUCKET 等环境变量）' });
+  }
+  if (!req.file) {
+    return res.status(400).json({ error: '未收到图片文件（字段名应为 image）' });
+  }
+  try {
+    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
+    const key = `memories/${uuidv4()}${ext}`;
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype,
+      })
+    );
+    // 返回相对路径，前端用 resolveImageUrl 拼上 API 域名后当 <img src>
+    res.status(201).json({ key, imageUrl: `/api/images/${key}` });
+  } catch (err) {
+    console.error('上传到数据胶囊失败:', err);
+    res.status(500).json({ error: '图片上传失败，请检查数据胶囊配置或稍后再试' });
+  }
+});
+
+// 图片代理：从数据胶囊取回图片并流式返回。
+// 注意：不走 requireAuth —— <img> 标签无法带 Authorization 头，而 key 是随机 UUID，近似"不可猜的私密链接"。
+app.get('/api/images/:key(*)', async (req, res) => {
+  const key = req.params.key;
+  try {
+    const obj = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+    res.setHeader('Content-Type', obj.ContentType || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 图片基本不变，缓存一年
+    obj.Body.pipe(res);
+    // 客户端中断时结束流的错误处理，避免进程报 unhandled error
+    obj.Body.on('error', (err) => {
+      console.error('流式读取图片失败:', err.message);
+      if (!res.headersSent) res.status(500).json({ error: '图片读取失败' });
+      else res.end();
+    });
+  } catch (err) {
+    const status = err?.$metadata?.httpStatusCode || err?.name;
+    if (status === 404 || err.name === 'NoSuchKey' || err.name === 'NotFound') {
+      return res.status(404).json({ error: '图片不存在' });
+    }
+    console.error('读取图片失败:', err);
+    res.status(500).json({ error: '图片读取失败' });
+  }
+});
+
+// multer 上传错误统一转成 JSON（文件太大 / 非图片类型）
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    const msg = err.code === 'LIMIT_FILE_SIZE' ? '图片不能超过 10MB' : `上传失败：${err.message}`;
+    return res.status(400).json({ error: msg });
+  }
+  if (err && err.message === '只能上传图片文件') {
+    return res.status(400).json({ error: err.message });
+  }
+  next(err);
 });
 
 // 登录：Prisma 查用户 + bcrypt 验证密码，成功返回 token

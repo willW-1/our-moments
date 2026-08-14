@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { uploadImage, resolveImageUrl } from './api';
 import styles from './MemoryForm.module.css';
 
 // 与 MemoryCard 的 TYPE_ICONS 中文 key 保持一致
@@ -16,6 +17,33 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl || '');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // 图片上传
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  // 选择本地图片 → 上传到数据胶囊 → 得到可用的 imageUrl
+  const handleFileChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // 清空，允许再次选择同一个文件
+    if (!file) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('登录已过期，请重新登录');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+    try {
+      const res = await uploadImage(token, file);
+      setImageUrl(res.imageUrl);
+    } catch (err) {
+      setUploadError(err.message || '图片上传失败');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,13 +149,30 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
         </label>
 
         <label className={styles.label}>
-          图片 URL
+          图片
+          <div className={styles.uploadArea}>
+            <input
+              className={styles.fileInput}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+            {uploading ? (
+              <span className={styles.uploadHint}>上传中…</span>
+            ) : imageUrl ? (
+              <img className={styles.preview} src={resolveImageUrl(imageUrl)} alt="图片预览" />
+            ) : (
+              <span className={styles.uploadHint}>选择本地图片上传到数据胶囊</span>
+            )}
+          </div>
+          {uploadError && <p className={styles.uploadError}>{uploadError}</p>}
           <input
             className={styles.input}
             type="text"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://…（暂时输入链接，不上传文件）"
+            placeholder="或直接粘贴图片链接（留空则不带图）"
           />
         </label>
 

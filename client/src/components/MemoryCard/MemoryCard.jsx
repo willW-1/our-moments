@@ -1,6 +1,7 @@
 import styles from './MemoryCard.module.css';
 import Comments from '../Comments/Comments';
 import { formatRelativeTime } from '../../formatTime';
+import { resolveImageUrl } from '../../api';
 
 const TYPE_ICONS = {
   // 英文键（兼容旧 mock 数据）
@@ -74,7 +75,7 @@ function MemoryCard({ memory, onEdit, onDelete }) {
       {imageUrl && (
         <img
           className={styles.image}
-          src={imageUrl}
+          src={resolveImageUrl(imageUrl)}
           alt={title}
           onError={(e) => { e.target.style.display = 'none'; }}
         />

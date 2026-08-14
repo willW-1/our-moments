@@ -160,6 +160,36 @@ export async function updateComment(token, commentId, content) {
   return result;
 }
 
+// 上传图片（需登录）：把文件 POST 给后端，后端存入数据胶囊 S3，成功返回 { imageUrl }
+export async function uploadImage(token, file) {
+  const form = new FormData();
+  form.append('image', file);
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form, // 不要手动设置 Content-Type，浏览器会自动带 multipart boundary
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+// 后端返回的图片地址可能是相对路径（/api/images/...），生产环境需拼上 API 域名
+export function resolveImageUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('/')) return API_BASE + url;
+  return url;
+}
+
 // 删除评论（需登录），成功返回 { success }
 export async function deleteComment(token, commentId) {
   let res;
