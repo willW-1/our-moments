@@ -15,13 +15,15 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
   const [location, setLocation] = useState(initial?.location || '');
   const [description, setDescription] = useState(initial?.description || '');
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl || '');
+  // 数据胶囊 S3 的对象 key（上传成功后才有；有它说明图片是直传到数据胶囊的）
+  const [imageKey, setImageKey] = useState(initial?.imageKey || '');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   // 图片上传
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
-  // 选择本地图片 → 上传到数据胶囊 → 得到可用的 imageUrl
+  // 选择本地图片 → 浏览器直传数据胶囊 → 得到 key（存库）和 getUrl（预览）
   const handleFileChange = async (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = ''; // 清空，允许再次选择同一个文件
@@ -37,7 +39,8 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
     setUploadError('');
     try {
       const res = await uploadImage(token, file);
-      setImageUrl(res.imageUrl);
+      setImageKey(res.key);
+      setImageUrl(res.getUrl);
     } catch (err) {
       setUploadError(err.message || '图片上传失败');
     } finally {
@@ -68,6 +71,7 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
         location: location.trim() || null,
         description: description.trim() || null,
         imageUrl: imageUrl.trim() || null,
+        imageKey: imageKey || null,
       });
       onClose();
     } catch (err) {
@@ -161,19 +165,36 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
             {uploading ? (
               <span className={styles.uploadHint}>上传中…</span>
             ) : imageUrl ? (
-              <img className={styles.preview} src={resolveImageUrl(imageUrl)} alt="图片预览" />
+              <>
+                <img className={styles.preview} src={resolveImageUrl(imageUrl)} alt="图片预览" />
+                <button
+                  type="button"
+                  className={styles.removeBtn}
+                  onClick={() => {
+                    setImageKey('');
+                    setImageUrl('');
+                  }}
+                >
+                  移除图片
+                </button>
+              </>
             ) : (
-              <span className={styles.uploadHint}>选择本地图片上传到数据胶囊</span>
+              <span className={styles.uploadHint}>选择本地图片直传到数据胶囊（不经过 Render）</span>
             )}
           </div>
           {uploadError && <p className={styles.uploadError}>{uploadError}</p>}
-          <input
-            className={styles.input}
-            type="text"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="或直接粘贴图片链接（留空则不带图）"
-          />
+          {!imageKey && (
+            <input
+              className={styles.input}
+              type="text"
+              value={imageUrl}
+              onChange={(e) => {
+                setImageUrl(e.target.value);
+                setImageKey('');
+              }}
+              placeholder="或直接粘贴图片链接（留空则不带图）"
+            />
+          )}
         </label>
 
         {error && <p className={styles.error}>{error}</p>}

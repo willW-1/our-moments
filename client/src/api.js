@@ -160,27 +160,49 @@ export async function updateComment(token, commentId, content) {
   return result;
 }
 
-// 上传图片（需登录）：把文件 POST 给后端，后端存入数据胶囊 S3，成功返回 { imageUrl }
+// 上传图片（需登录）：向后端申请直传签名 URL，浏览器直接把文件 PUT 到数据胶囊（不经过 Render）。
+// 返回 { key, getUrl } —— key 存库用于后续生成直读链接，getUrl 用于立即预览
 export async function uploadImage(token, file) {
-  const form = new FormData();
-  form.append('image', file);
+  const contentType = file.type || 'application/octet-stream';
+  // 1) 向后端申请 PUT 签名 URL（签名时锁定了 Content-Type，PUT 时必须一致）
   let res;
   try {
     res = await fetch(`${API_BASE}/api/upload`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: form, // 不要手动设置 Content-Type，浏览器会自动带 multipart boundary
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ filename: file.name || 'image.jpg', contentType }),
     });
   } catch {
     throw new Error('网络异常');
   }
-  const result = await res.json().catch(() => ({}));
+  const ticket = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(result.error || `HTTP ${res.status}`);
+    const err = new Error(ticket.error || `HTTP ${res.status}`);
     err.status = res.status;
     throw err;
   }
-  return result;
+  if (!ticket.uploadUrl) {
+    throw new Error('服务端未返回直传链接');
+  }
+  // 2) 浏览器直传数据胶囊（跨域，需数据胶囊 S3 开启 CORS）
+  let put;
+  try {
+    put = await fetch(ticket.uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      body: file,
+    });
+  } catch {
+    const err = new Error('直传失败：请确认数据胶囊 S3 已开启跨域（CORS）');
+    err.status = 0;
+    throw err;
+  }
+  if (!put.ok) {
+    const err = new Error(`直传失败（HTTP ${put.status}）：请检查数据胶囊配置`);
+    err.status = put.status;
+    throw err;
+  }
+  return { key: ticket.key, getUrl: ticket.getUrl };
 }
 
 // 后端返回的图片地址可能是相对路径（/api/images/...），生产环境需拼上 API 域名

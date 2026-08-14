@@ -24,6 +24,9 @@ const s3 = new S3Client({
   endpoint,
   forcePathStyle: process.env.CSTCLOUD_FORCE_PATH_STYLE !== 'false',
   credentials,
+  // 关闭自动附加 CRC32 校验：presigned PUT 由浏览器直发，无法带上 SDK 按空 body 算的 checksum，
+  // 留着会让 S3 兼容服务因为校验和不匹配拒绝上传
+  requestChecksumCalculation: 'WHEN_REQUIRED',
 });
 
 const bucket = process.env.CSTCLOUD_BUCKET || '';

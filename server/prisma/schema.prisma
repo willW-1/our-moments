@@ -27,6 +27,7 @@ model Memory {
   location    String?  @db.VarChar
   description String?
   image_url   String?
+  image_key   String?  @db.VarChar // 数据胶囊 S3 的对象 key（直传/直读用，避免把过期签名 URL 存进库）
   created_at  DateTime @default(now()) @db.Timestamptz(6)
   user_id     Int
   user        User     @relation(fields: [user_id], references: [id])

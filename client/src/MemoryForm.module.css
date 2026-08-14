@@ -118,6 +118,20 @@
   margin: 6px 0 0;
 }
 
+.removeBtn {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  color: #c62828;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.removeBtn:hover {
+  text-decoration: underline;
+}
+
 .actions {
   display: flex;
   gap: 12px;

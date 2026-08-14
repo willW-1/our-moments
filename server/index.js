@@ -3,9 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const multer = require('multer');
 const path = require('path');
 const { PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { s3, bucket } = require('./s3');
 
 const { PrismaClient } = require('@prisma/client');
@@ -14,15 +14,13 @@ const { PrismaPg } = require('@prisma/adapter-pg');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 图片上传：内存暂存 + 限 10MB + 只收图片
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype && file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('只能上传图片文件'));
-  },
-});
+// 生成数据胶囊 S3 对象的短期签名 GET URL（7 天），供 <img> 直读，不经过 Render
+async function signedGetUrl(key) {
+  if (!key || !bucket) return null;
+  return getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+    expiresIn: 7 * 24 * 3600,
+  });
+}
 
 // 登录 token → 用户 的映射（内存版，进程重启即失效，后续可换 Redis / JWT）
 const tokenStore = new Map();
@@ -66,21 +64,26 @@ app.get('/api/memories', requireAuth, async (req, res) => {
       },
     });
     // 数据库使用 snake_case，映射回前端 camelCase；user 联表带出帖子/评论的作者
-    res.json(
-      memories.map(({ image_url, created_at, user, comments, ...rest }) => ({
-        ...rest,
-        imageUrl: image_url,
-        createdAt: created_at,
-        author: user?.username ?? null,
-        comments: (comments || []).map((c) => ({
-          id: c.id,
-          content: c.content,
-          createdAt: c.created_at,
-          updatedAt: c.updated_at,
-          author: c.user?.username ?? null, // 这条评论是谁发的
-        })),
-      }))
+    // 有 image_key（数据胶囊直传）的，实时生成 7 天签名 GET URL 供 <img> 直读；否则用存的 image_url
+    const list = await Promise.all(
+      memories.map(
+        async ({ image_url, image_key, created_at, user, comments, ...rest }) => ({
+          ...rest,
+          imageUrl: image_key ? await signedGetUrl(image_key) : image_url,
+          imageKey: image_key ?? null,
+          createdAt: created_at,
+          author: user?.username ?? null,
+          comments: (comments || []).map((c) => ({
+            id: c.id,
+            content: c.content,
+            createdAt: c.created_at,
+            updatedAt: c.updated_at,
+            author: c.user?.username ?? null, // 这条评论是谁发的
+          })),
+        })
+      )
     );
+    res.json(list);
   } catch (err) {
     console.error('查询 memories 失败:', err);
     res.status(500).json({ error: '服务器内部错误' });
@@ -88,10 +91,10 @@ app.get('/api/memories', requireAuth, async (req, res) => {
 });
 
 // 创建一条 memory（需登录），user_id 取当前登录用户
-// body: { type, title, date, location?, description?, imageUrl? }
+// body: { type, title, date, location?, description?, imageUrl?, imageKey? }
 app.post('/api/memories', requireAuth, async (req, res) => {
   try {
-    const { type, title, date, location, description, imageUrl } = req.body || {};
+    const { type, title, date, location, description, imageUrl, imageKey } = req.body || {};
 
     if (!type || !title || !date) {
       return res.status(400).json({ error: 'type、title、date 为必填字段' });
@@ -110,16 +113,18 @@ app.post('/api/memories', requireAuth, async (req, res) => {
         location: location ?? null,
         description: description ?? null,
         image_url: imageUrl ?? null,
+        image_key: imageKey ?? null,
         user_id: req.user.userId,
       },
       include: { user: { select: { username: true } } },
     });
 
     // 与 GET 一致的字段映射：snake_case → camelCase，并带上 author
-    const { image_url, created_at, user, ...rest } = memory;
+    const { image_url, image_key, created_at, user, ...rest } = memory;
     res.status(201).json({
       ...rest,
-      imageUrl: image_url,
+      imageUrl: image_key ? await signedGetUrl(image_key) : image_url,
+      imageKey: image_key ?? null,
       createdAt: created_at,
       author: user?.username ?? null,
     });
@@ -143,7 +148,7 @@ app.put('/api/memories/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ error: '记录不存在' });
     }
 
-    const { type, title, date, location, description, imageUrl } = req.body || {};
+    const { type, title, date, location, description, imageUrl, imageKey } = req.body || {};
     if (!type || !title || !date) {
       return res.status(400).json({ error: 'type、title、date 为必填字段' });
     }
@@ -162,15 +167,17 @@ app.put('/api/memories/:id', requireAuth, async (req, res) => {
         location: location ?? null,
         description: description ?? null,
         image_url: imageUrl ?? null,
+        image_key: imageKey ?? null,
       },
       include: { user: { select: { username: true } } },
     });
 
     // 与 GET / POST 一致的字段映射
-    const { image_url, created_at, user, ...rest } = memory;
+    const { image_url, image_key, created_at, user, ...rest } = memory;
     res.json({
       ...rest,
-      imageUrl: image_url,
+      imageUrl: image_key ? await signedGetUrl(image_key) : image_url,
+      imageKey: image_key ?? null,
       createdAt: created_at,
       author: user?.username ?? null,
     });
@@ -301,70 +308,31 @@ app.delete('/api/comments/:id', requireAuth, async (req, res) => {
   }
 });
 
-// ===== 图片上传（中国科技云数据胶囊 S3） =====
+// ===== 图片上传（中国科技云数据胶囊 S3，浏览器直传） =====
 
-// 上传图片（需登录）：multipart 表单里 field 名为 image，返回可在前端直接用的 imageUrl
-app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) => {
+// 申请直传签名 URL（需登录）：浏览器拿 uploadUrl 直接 PUT 文件到 s3.cstcloud.cn，不经过 Render。
+// body: { filename, contentType }，成功返回 { key, uploadUrl, getUrl }
+app.post('/api/upload', requireAuth, async (req, res) => {
   if (!bucket) {
     return res.status(500).json({ error: '服务端未配置数据胶囊（CSTCLOUD_BUCKET 等环境变量）' });
   }
-  if (!req.file) {
-    return res.status(400).json({ error: '未收到图片文件（字段名应为 image）' });
-  }
+  const { filename = 'image.jpg', contentType = 'application/octet-stream' } = req.body || {};
+  const ext = path.extname(filename).toLowerCase() || '.jpg';
+  const key = `memories/${uuidv4()}${ext}`;
   try {
-    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
-    const key = `memories/${uuidv4()}${ext}`;
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-      })
+    // PUT 签名 URL：5 分钟内有效；签名时锁定了 Content-Type，浏览器 PUT 时必须用同一个
+    const uploadUrl = await getSignedUrl(
+      s3,
+      new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
+      { expiresIn: 5 * 60 }
     );
-    // 返回相对路径，前端用 resolveImageUrl 拼上 API 域名后当 <img src>
-    res.status(201).json({ key, imageUrl: `/api/images/${key}` });
+    // 顺带给一个 7 天的 GET 签名 URL，前端上传完立刻能预览
+    const getUrl = await signedGetUrl(key);
+    res.status(201).json({ key, uploadUrl, getUrl });
   } catch (err) {
-    console.error('上传到数据胶囊失败:', err);
-    res.status(500).json({ error: '图片上传失败，请检查数据胶囊配置或稍后再试' });
+    console.error('生成直传签名 URL 失败:', err);
+    res.status(500).json({ error: '生成上传链接失败，请检查数据胶囊配置' });
   }
-});
-
-// 图片代理：从数据胶囊取回图片并流式返回。
-// 注意：不走 requireAuth —— <img> 标签无法带 Authorization 头，而 key 是随机 UUID，近似"不可猜的私密链接"。
-app.get('/api/images/:key(*)', async (req, res) => {
-  const key = req.params.key;
-  try {
-    const obj = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-    res.setHeader('Content-Type', obj.ContentType || 'application/octet-stream');
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 图片基本不变，缓存一年
-    obj.Body.pipe(res);
-    // 客户端中断时结束流的错误处理，避免进程报 unhandled error
-    obj.Body.on('error', (err) => {
-      console.error('流式读取图片失败:', err.message);
-      if (!res.headersSent) res.status(500).json({ error: '图片读取失败' });
-      else res.end();
-    });
-  } catch (err) {
-    const status = err?.$metadata?.httpStatusCode || err?.name;
-    if (status === 404 || err.name === 'NoSuchKey' || err.name === 'NotFound') {
-      return res.status(404).json({ error: '图片不存在' });
-    }
-    console.error('读取图片失败:', err);
-    res.status(500).json({ error: '图片读取失败' });
-  }
-});
-
-// multer 上传错误统一转成 JSON（文件太大 / 非图片类型）
-app.use((err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    const msg = err.code === 'LIMIT_FILE_SIZE' ? '图片不能超过 10MB' : `上传失败：${err.message}`;
-    return res.status(400).json({ error: msg });
-  }
-  if (err && err.message === '只能上传图片文件') {
-    return res.status(400).json({ error: err.message });
-  }
-  next(err);
 });
 
 // 登录：Prisma 查用户 + bcrypt 验证密码，成功返回 token
