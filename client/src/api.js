@@ -160,49 +160,46 @@ export async function updateComment(token, commentId, content) {
   return result;
 }
 
-// 上传图片（需登录）：向后端申请直传签名 URL，浏览器直接把文件 PUT 到数据胶囊（不经过 Render）。
-// 返回 { key, getUrl } —— key 存库用于后续生成直读链接，getUrl 用于立即预览
+// 上传图片（需登录）：先从服务器拿 presigned PUT 地址，再由浏览器把文件直接 PUT 到 Filebase。
+// 返回 { key, getUrl } —— key 存库用于生成直链，getUrl（公开桶直链）用于立即预览
 export async function uploadImage(token, file) {
   const contentType = file.type || 'application/octet-stream';
-  // 1) 向后端申请 PUT 签名 URL（签名时锁定了 Content-Type，PUT 时必须一致）
+
+  // 1) 登录用户向服务器要一个直传地址
   let res;
   try {
     res = await fetch(`${API_BASE}/api/upload`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ filename: file.name || 'image.jpg', contentType }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ contentType, fileName: file.name }),
     });
   } catch {
     throw new Error('网络异常');
   }
-  const ticket = await res.json().catch(() => ({}));
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(ticket.error || `HTTP ${res.status}`);
+    const err = new Error(data.error || `HTTP ${res.status}`);
     err.status = res.status;
     throw err;
   }
-  if (!ticket.uploadUrl) {
-    throw new Error('服务端未返回直传链接');
-  }
-  // 2) 浏览器直传数据胶囊（跨域，需数据胶囊 S3 开启 CORS）
-  let put;
+
+  // 2) 浏览器直接把文件 PUT 到 Filebase（签名覆盖 Content-Type，必须按服务器返回的 contentType 原样发）
   try {
-    put = await fetch(ticket.uploadUrl, {
+    const put = await fetch(data.uploadUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': contentType },
+      headers: { 'Content-Type': data.contentType || contentType },
       body: file,
     });
-  } catch {
-    const err = new Error('直传失败：请确认数据胶囊 S3 已开启跨域（CORS）');
-    err.status = 0;
-    throw err;
+    if (!put.ok) throw new Error(`直传失败 HTTP ${put.status}`);
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith('直传失败')) throw err;
+    throw new Error('网络异常');
   }
-  if (!put.ok) {
-    const err = new Error(`直传失败（HTTP ${put.status}）：请检查数据胶囊配置`);
-    err.status = put.status;
-    throw err;
-  }
-  return { key: ticket.key, getUrl: ticket.getUrl };
+
+  return { key: data.key, getUrl: data.getUrl };
 }
 
 // 后端返回的图片地址可能是相对路径（/api/images/...），生产环境需拼上 API 域名

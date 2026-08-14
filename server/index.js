@@ -14,12 +14,25 @@ const { PrismaPg } = require('@prisma/adapter-pg');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 生成数据胶囊 S3 对象的短期签名 GET URL（7 天），供 <img> 直读，不经过 Render
-async function signedGetUrl(key) {
+// Filebase 私有桶：<img> 不能匿名读，服务器给每个图片签发一个带签名、可直接在浏览器打开的 GET 直链。
+// 图片仍直接从 Filebase CDN 加载（不经过 Render）；URL 7 天过期，前端重新拉列表即可刷新。
+async function signedImageUrl(key) {
   if (!key || !bucket) return null;
-  return getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: key }), {
-    expiresIn: 7 * 24 * 3600,
-  });
+  return getSignedUrl(
+    s3,
+    new GetObjectCommand({ Bucket: bucket, Key: key }),
+    { expiresIn: 7 * 24 * 60 * 60 }
+  );
+}
+
+// 生成浏览器直传用的 presigned PUT URL（5 分钟有效）。签名覆盖 Content-Type，
+// 所以客户端必须按返回的 contentType 原样发送该 header，否则签名校验不过。
+function presignedPutUrl(key, contentType) {
+  return getSignedUrl(
+    s3,
+    new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
+    { expiresIn: 5 * 60 }
+  );
 }
 
 // 登录 token → 用户 的映射（内存版，进程重启即失效，后续可换 Redis / JWT）
@@ -66,10 +79,11 @@ app.get('/api/memories', requireAuth, async (req, res) => {
     // 数据库使用 snake_case，映射回前端 camelCase；user 联表带出帖子/评论的作者
     // 有 image_key（数据胶囊直传）的，实时生成 7 天签名 GET URL 供 <img> 直读；否则用存的 image_url
     const list = await Promise.all(
-      memories.map(
-        async ({ image_url, image_key, created_at, user, comments, ...rest }) => ({
+      memories.map(async ({ image_url, image_key, created_at, user, comments, ...rest }) => {
+        const imageUrl = image_key ? await signedImageUrl(image_key) : image_url;
+        return {
           ...rest,
-          imageUrl: image_key ? await signedGetUrl(image_key) : image_url,
+          imageUrl,
           imageKey: image_key ?? null,
           createdAt: created_at,
           author: user?.username ?? null,
@@ -80,8 +94,8 @@ app.get('/api/memories', requireAuth, async (req, res) => {
             updatedAt: c.updated_at,
             author: c.user?.username ?? null, // 这条评论是谁发的
           })),
-        })
-      )
+        };
+      })
     );
     res.json(list);
   } catch (err) {
@@ -123,7 +137,7 @@ app.post('/api/memories', requireAuth, async (req, res) => {
     const { image_url, image_key, created_at, user, ...rest } = memory;
     res.status(201).json({
       ...rest,
-      imageUrl: image_key ? await signedGetUrl(image_key) : image_url,
+      imageUrl: image_key ? await signedImageUrl(image_key) : image_url,
       imageKey: image_key ?? null,
       createdAt: created_at,
       author: user?.username ?? null,
@@ -176,7 +190,7 @@ app.put('/api/memories/:id', requireAuth, async (req, res) => {
     const { image_url, image_key, created_at, user, ...rest } = memory;
     res.json({
       ...rest,
-      imageUrl: image_key ? await signedGetUrl(image_key) : image_url,
+      imageUrl: image_key ? await signedImageUrl(image_key) : image_url,
       imageKey: image_key ?? null,
       createdAt: created_at,
       author: user?.username ?? null,
@@ -308,30 +322,30 @@ app.delete('/api/comments/:id', requireAuth, async (req, res) => {
   }
 });
 
-// ===== 图片上传（中国科技云数据胶囊 S3，浏览器直传） =====
+// ===== 图片直传 + 签名直链（Filebase 私有桶） =====
+//
+// Filebase 是标准 S3（SigV4，无 UA 校验）。bucket 是私有的，方案：
+//   1) 登录后向 /api/upload 要一个 presigned PUT URL（5 分钟有效）
+//   2) 浏览器把文件直接 PUT 到 https://s3.filebase.com（直传，不经过 Render）
+//   3) 读取时服务器给每个 image_key 签发 7 天有效的签名 GET URL（signedImageUrl），
+//      <img> 直接从 Filebase CDN 加载（仍不经过 Render），URL 过期后前端重新拉列表即可刷新
 
-// 申请直传签名 URL（需登录）：浏览器拿 uploadUrl 直接 PUT 文件到 s3.cstcloud.cn，不经过 Render。
-// body: { filename, contentType }，成功返回 { key, uploadUrl, getUrl }
+// 生成直传地址（需登录）：body: { contentType?, fileName? }
+// 返回 { key, contentType, uploadUrl, getUrl } —— uploadUrl 用于浏览器直接 PUT，getUrl 是签名直链（预览用）
 app.post('/api/upload', requireAuth, async (req, res) => {
   if (!bucket) {
-    return res.status(500).json({ error: '服务端未配置数据胶囊（CSTCLOUD_BUCKET 等环境变量）' });
+    return res.status(500).json({ error: '服务端未配置对象存储（CSTCLOUD_BUCKET 等环境变量）' });
   }
-  const { filename = 'image.jpg', contentType = 'application/octet-stream' } = req.body || {};
-  const ext = path.extname(filename).toLowerCase() || '.jpg';
+  const { contentType = 'application/octet-stream', fileName } = req.body || {};
+  const ext = (fileName && path.extname(fileName).toLowerCase()) || '';
   const key = `memories/${uuidv4()}${ext}`;
   try {
-    // PUT 签名 URL：5 分钟内有效；签名时锁定了 Content-Type，浏览器 PUT 时必须用同一个
-    const uploadUrl = await getSignedUrl(
-      s3,
-      new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
-      { expiresIn: 5 * 60 }
-    );
-    // 顺带给一个 7 天的 GET 签名 URL，前端上传完立刻能预览
-    const getUrl = await signedGetUrl(key);
-    res.status(201).json({ key, uploadUrl, getUrl });
+    const uploadUrl = await presignedPutUrl(key, contentType);
+    const getUrl = await signedImageUrl(key);
+    res.json({ key, contentType, uploadUrl, getUrl });
   } catch (err) {
-    console.error('生成直传签名 URL 失败:', err);
-    res.status(500).json({ error: '生成上传链接失败，请检查数据胶囊配置' });
+    console.error('生成直传地址失败:', err);
+    res.status(500).json({ error: '生成直传地址失败，请检查存储配置' });
   }
 });
 

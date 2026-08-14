@@ -1,15 +1,16 @@
-// 中国科技云数据胶囊（CSTCloud Data Capsule）S3 客户端
+// Filebase（s3.filebase.io）S3 客户端 —— 纯标准 SigV4，无 UA 校验
+// 注意：Filebase 的 .io 与 .com 是两套不同存储空间，bucket 建在哪个就用哪个端点（当前用 .io）
 //
 // 环境变量：
-//   CSTCLOUD_S3_ENDPOINT      端点，默认 https://s3.cstcloud.cn
-//   CSTCLOUD_S3_REGION        region，数据胶囊面板里通常不区分 region，填 us-east-1 即可（可覆盖）
-//   CSTCLOUD_ACCESS_KEY       S3 Access Key（数据空间面板「客户端访问」里生成）
+//   CSTCLOUD_S3_ENDPOINT      端点，默认 https://s3.filebase.io
+//   CSTCLOUD_S3_REGION        region，Filebase 固定 us-east-1（可覆盖）
+//   CSTCLOUD_ACCESS_KEY       S3 Access Key（Filebase 控制台生成）
 //   CSTCLOUD_SECRET_KEY       S3 Secret Key
-//   CSTCLOUD_BUCKET           你的 bucket 名称
-//   CSTCLOUD_FORCE_PATH_STYLE 是否用 path-style 寻址，兼容服务默认 true
+//   CSTCLOUD_BUCKET           bucket 名称（私有桶即可：写用 presigned PUT，读用签名 GET 直链）
+//   CSTCLOUD_FORCE_PATH_STYLE 是否用 path-style 寻址，Filebase 兼容 path-style，默认 true
 const { S3Client } = require('@aws-sdk/client-s3');
 
-const endpoint = process.env.CSTCLOUD_S3_ENDPOINT || 'https://s3.cstcloud.cn';
+const endpoint = process.env.CSTCLOUD_S3_ENDPOINT || 'https://s3.filebase.io';
 const accessKey = process.env.CSTCLOUD_ACCESS_KEY || '';
 const secretKey = process.env.CSTCLOUD_SECRET_KEY || '';
 

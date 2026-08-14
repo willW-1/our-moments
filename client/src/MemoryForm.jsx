@@ -179,7 +179,7 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
                 </button>
               </>
             ) : (
-              <span className={styles.uploadHint}>选择本地图片直传到数据胶囊（不经过 Render）</span>
+              <span className={styles.uploadHint}>选择本地图片直传到 Filebase（不经过 Render）</span>
             )}
           </div>
           {uploadError && <p className={styles.uploadError}>{uploadError}</p>}
