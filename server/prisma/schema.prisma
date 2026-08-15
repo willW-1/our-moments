@@ -10,13 +10,14 @@ datasource db {
 }
 
 model User {
-  id         Int         @id @default(autoincrement())
-  username   String      @unique @db.VarChar
-  password   String      @db.VarChar
-  memories   Memory[]
-  comments   Comment[]
-  countdowns Countdown[]
-  messages   Message[]
+  id             Int            @id @default(autoincrement())
+  username       String         @unique @db.VarChar
+  password       String         @db.VarChar
+  memories       Memory[]
+  comments       Comment[]
+  countdowns     Countdown[]
+  messages       Message[]
+  messageReplies MessageReply[]
 
   @@map("users")
 }
@@ -38,15 +39,21 @@ model Memory {
   @@map("memories")
 }
 
+// 回忆卡片下的评论。parent_id 为空 = 顶层评论；非空 = 对该评论的回复。
+// 只做一层嵌套：回复挂在最顶层评论下（回复的回复也会收归到顶层）。
+// 删除顶层评论时级联删除其下所有回复。
 model Comment {
-  id         Int      @id @default(autoincrement())
-  content    String   @db.Text
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @updatedAt @db.Timestamptz(6)
+  id         Int       @id @default(autoincrement())
+  content    String    @db.Text
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @updatedAt @db.Timestamptz(6)
   memory_id  Int
+  parent_id  Int?
   user_id    Int
-  memory     Memory   @relation(fields: [memory_id], references: [id])
-  user       User     @relation(fields: [user_id], references: [id])
+  memory     Memory    @relation(fields: [memory_id], references: [id])
+  parent     Comment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("CommentReplies")
+  user       User      @relation(fields: [user_id], references: [id])
 
   @@map("comments")
 }
@@ -64,14 +71,29 @@ model Countdown {
   @@map("countdowns")
 }
 
-// 留言板（右侧栏）：显示内容 + 日期 + 作者
+// 留言板（右侧栏）：显示内容 + 日期 + 作者；每条留言下可回复
 model Message {
+  id         Int            @id @default(autoincrement())
+  content    String         @db.Text
+  user_id    Int
+  user       User           @relation(fields: [user_id], references: [id])
+  replies    MessageReply[]
+  created_at DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at DateTime       @updatedAt @db.Timestamptz(6)
+
+  @@map("messages")
+}
+
+// 留言板留言的回复：同样显示内容 + 时间 + 作者，支持编辑/删除
+model MessageReply {
   id         Int      @id @default(autoincrement())
   content    String   @db.Text
+  message_id Int
+  message    Message  @relation(fields: [message_id], references: [id], onDelete: Cascade)
   user_id    Int
   user       User     @relation(fields: [user_id], references: [id])
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
-  @@map("messages")
+  @@map("message_replies")
 }

@@ -8,6 +8,17 @@ import CountdownPanel from './components/CountdownPanel/CountdownPanel';
 import MessageBoard from './components/MessageBoard/MessageBoard';
 import { fetchMe, fetchMemories, deleteMemory } from './api';
 
+// 页脚：技术栈小字 + 特别鸣谢大字（登录前后都显示在页面最下方）
+const appFooter = (
+  <footer className="app-footer">
+    <p className="footer-tech">
+      本页面使用 Claude + DeepSeek vibe coding 而成 · 前端挂载于腾讯 EdgeOne Pages · 数据库由 Aiven
+      支持 · 后端挂载于 Render · 上传的图片存储于 Filebase
+    </p>
+    <p className="footer-thanks">特别鸣谢 @Cynosure @冰的热美式</p>
+  </footer>
+);
+
 function App() {
   // 登录状态：checking（正在验证 token）/ loggedIn / loggedOut
   const [authState, setAuthState] = useState('checking');
@@ -97,7 +108,12 @@ function App() {
   };
 
   if (authState === 'loggedOut') {
-    return <Login onLoginSuccess={handleLoggedIn} />;
+    return (
+      <div className="app">
+        <Login onLoginSuccess={handleLoggedIn} />
+        {appFooter}
+      </div>
+    );
   }
 
   return (
@@ -152,6 +168,7 @@ function App() {
           }}
         />
       )}
+      {authState === 'loggedIn' && appFooter}
     </div>
   );
 }

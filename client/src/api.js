@@ -113,7 +113,8 @@ export async function deleteMemory(token, id) {
 }
 
 // 创建评论（需登录），成功返回新建的评论
-export async function createComment(token, memoryId, content) {
+// parentId 传入 → 对该评论的回复（回复挂在最顶层评论下，只做一层嵌套）
+export async function createComment(token, memoryId, content, parentId) {
   let res;
   try {
     res = await fetch(`${API_BASE}/api/memories/${memoryId}/comments`, {
@@ -122,7 +123,10 @@ export async function createComment(token, memoryId, content) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({
+        content,
+        ...(parentId ? { parentId } : {}),
+      }),
     });
   } catch {
     throw new Error('网络异常');
@@ -386,6 +390,76 @@ export async function deleteMessage(token, id) {
   let res;
   try {
     res = await fetch(`${API_BASE}/api/messages/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+// ===== 留言板回复 =====
+
+// 回复一条留言（需登录），成功返回新建的回复
+export async function createMessageReply(token, messageId, content) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/messages/${messageId}/replies`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+// 编辑一条留言回复（需登录），成功返回更新后的回复
+export async function updateMessageReply(token, replyId, content) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/message-replies/${replyId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+// 删除一条留言回复（需登录），成功返回 { success }
+export async function deleteMessageReply(token, replyId) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/message-replies/${replyId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });

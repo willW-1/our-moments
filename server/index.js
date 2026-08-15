@@ -81,7 +81,13 @@ app.get('/api/memories', requireAuth, async (req, res) => {
         user: { select: { username: true } },
         comments: {
           orderBy: { created_at: 'asc' },
-          include: { user: { select: { username: true } } },
+          include: {
+            user: { select: { username: true } },
+            replies: {
+              orderBy: { created_at: 'asc' },
+              include: { user: { select: { username: true } } },
+            },
+          },
         },
       },
     });
@@ -96,13 +102,23 @@ app.get('/api/memories', requireAuth, async (req, res) => {
           imageKey: image_key ?? null,
           createdAt: created_at,
           author: user?.username ?? null,
-          comments: (comments || []).map((c) => ({
-            id: c.id,
-            content: c.content,
-            createdAt: c.created_at,
-            updatedAt: c.updated_at,
-            author: c.user?.username ?? null, // 这条评论是谁发的
-          })),
+          // 只留顶层评论（parent_id 为空），并把回复嵌套进各自顶层评论下
+          comments: (comments || [])
+            .filter((c) => c.parent_id == null)
+            .map((c) => ({
+              id: c.id,
+              content: c.content,
+              createdAt: c.created_at,
+              updatedAt: c.updated_at,
+              author: c.user?.username ?? null, // 这条评论是谁发的
+              replies: (c.replies || []).map((r) => ({
+                id: r.id,
+                content: r.content,
+                createdAt: r.created_at,
+                updatedAt: r.updated_at,
+                author: r.user?.username ?? null,
+              })),
+            })),
         };
       })
     );
@@ -233,7 +249,8 @@ app.delete('/api/memories/:id', requireAuth, async (req, res) => {
 
 // ===== 评论 =====
 
-// 创建一条评论（需登录），body: { content }
+// 创建一条评论（需登录），body: { content, parentId? }
+// parentId 为空 → 顶层评论；非空 → 对该评论的回复（回复挂到最顶层评论下，只做一层嵌套）
 app.post('/api/memories/:id/comments', requireAuth, async (req, res) => {
   try {
     const memoryId = parseInt(req.params.id, 10);
@@ -246,15 +263,31 @@ app.post('/api/memories/:id/comments', requireAuth, async (req, res) => {
       return res.status(404).json({ error: '记录不存在' });
     }
 
-    const { content } = req.body || {};
+    const { content, parentId } = req.body || {};
     if (!content || !String(content).trim()) {
       return res.status(400).json({ error: '评论内容不能为空' });
+    }
+
+    // 校验父评论存在且属于同一条回忆
+    let parent_id = null;
+    if (parentId != null && parentId !== '') {
+      const pid = parseInt(parentId, 10);
+      if (isNaN(pid)) {
+        return res.status(400).json({ error: '无效的父评论 id' });
+      }
+      const parentComment = await prisma.comment.findUnique({ where: { id: pid } });
+      if (!parentComment || parentComment.memory_id !== memoryId) {
+        return res.status(400).json({ error: '父评论不存在或不属于该回忆' });
+      }
+      // 回复的回复收归到最顶层评论，保证只有一层嵌套
+      parent_id = parentComment.parent_id ?? parentComment.id;
     }
 
     const comment = await prisma.comment.create({
       data: {
         content: String(content).trim(),
         memory_id: memoryId,
+        parent_id,
         user_id: req.user.userId,
       },
       include: { user: { select: { username: true } } },
@@ -263,6 +296,7 @@ app.post('/api/memories/:id/comments', requireAuth, async (req, res) => {
     res.status(201).json({
       id: comment.id,
       content: comment.content,
+      parentId: comment.parent_id ?? null,
       createdAt: comment.created_at,
       updatedAt: comment.updated_at,
       author: comment.user?.username ?? null, // 这条评论是谁发的
@@ -300,6 +334,7 @@ app.put('/api/comments/:id', requireAuth, async (req, res) => {
     res.json({
       id: comment.id,
       content: comment.content,
+      parentId: comment.parent_id ?? null,
       createdAt: comment.created_at,
       updatedAt: comment.updated_at,
       author: comment.user?.username ?? null,
@@ -442,19 +477,32 @@ app.delete('/api/countdowns/:id', requireAuth, async (req, res) => {
 
 // ===== 留言板（右侧栏） =====
 
-// 查询全部留言，按发布时间倒序（最新在前，需登录）
+// 查询全部留言，按发布时间倒序（最新在前，需登录），每条留言带回复列表
 app.get('/api/messages', requireAuth, async (req, res) => {
   try {
     const messages = await prisma.message.findMany({
       orderBy: { created_at: 'desc' },
-      include: { user: { select: { username: true } } },
+      include: {
+        user: { select: { username: true } },
+        replies: {
+          orderBy: { created_at: 'asc' },
+          include: { user: { select: { username: true } } },
+        },
+      },
     });
     res.json(
-      messages.map(({ created_at, updated_at, user, ...rest }) => ({
+      messages.map(({ created_at, updated_at, user, replies, ...rest }) => ({
         ...rest,
         createdAt: created_at,
         updatedAt: updated_at,
         author: user?.username ?? null,
+        replies: (replies || []).map((r) => ({
+          id: r.id,
+          content: r.content,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+          author: r.user?.username ?? null,
+        })),
       }))
     );
   } catch (err) {
@@ -529,6 +577,84 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('删除留言失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// ===== 留言板回复 =====
+
+// 回复一条留言（需登录），body: { content }
+app.post('/api/messages/:id/replies', requireAuth, async (req, res) => {
+  try {
+    const messageId = parseInt(req.params.id, 10);
+    if (isNaN(messageId)) return res.status(400).json({ error: '无效的 id' });
+    const message = await prisma.message.findUnique({ where: { id: messageId } });
+    if (!message) return res.status(404).json({ error: '留言不存在' });
+
+    const { content } = req.body || {};
+    if (!content || !String(content).trim()) {
+      return res.status(400).json({ error: '回复内容不能为空' });
+    }
+
+    const reply = await prisma.messageReply.create({
+      data: { content: String(content).trim(), message_id: messageId, user_id: req.user.userId },
+      include: { user: { select: { username: true } } },
+    });
+    res.status(201).json({
+      id: reply.id,
+      content: reply.content,
+      createdAt: reply.created_at,
+      updatedAt: reply.updated_at,
+      author: reply.user?.username ?? null,
+    });
+  } catch (err) {
+    console.error('创建留言回复失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 编辑一条留言回复（需登录），body: { content }
+app.put('/api/message-replies/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
+    const existing = await prisma.messageReply.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: '回复不存在' });
+
+    const { content } = req.body || {};
+    if (!content || !String(content).trim()) {
+      return res.status(400).json({ error: '回复内容不能为空' });
+    }
+
+    const reply = await prisma.messageReply.update({
+      where: { id },
+      data: { content: String(content).trim() },
+      include: { user: { select: { username: true } } },
+    });
+    res.json({
+      id: reply.id,
+      content: reply.content,
+      createdAt: reply.created_at,
+      updatedAt: reply.updated_at,
+      author: reply.user?.username ?? null,
+    });
+  } catch (err) {
+    console.error('编辑留言回复失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 删除一条留言回复（需登录）
+app.delete('/api/message-replies/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
+    const existing = await prisma.messageReply.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: '回复不存在' });
+    await prisma.messageReply.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('删除留言回复失败:', err);
     res.status(500).json({ error: '服务器内部错误' });
   }
 });
