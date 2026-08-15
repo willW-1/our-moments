@@ -81,6 +81,48 @@ body {
   color: #c62828;
 }
 
+/* ===== 三栏布局：左右固定，中间回忆列表随页面滚动 ===== */
+.app-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px;
+}
+
+/* 左右栏 sticky：钉在视口顶部（低于 header），中间回忆滚动时保持可见 */
+.app-side-left,
+.app-side-right {
+  position: sticky;
+  top: 80px;
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.app-center {
+  flex: 1;
+  min-width: 0;
+  max-width: 640px;
+}
+
+/* 窄屏（手机）：三栏改上下堆叠，左右面板不再固定 */
+@media (max-width: 1024px) {
+  .app-body {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 12px;
+  }
+
+  .app-side-left,
+  .app-side-right {
+    position: static;
+    width: 100%;
+  }
+}
+
 /* ===== FAB ===== */
 .fab {
   position: fixed;

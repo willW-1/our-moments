@@ -331,6 +331,208 @@ app.delete('/api/comments/:id', requireAuth, async (req, res) => {
   }
 });
 
+// ===== 倒计时 / 正计时（左侧栏） =====
+// 目标日期在未来 → 前端显示「还有 N 天」；在过去 → 前端显示「已经 N 天」
+
+// 查询全部倒计时，按目标日期升序（需登录）
+app.get('/api/countdowns', requireAuth, async (req, res) => {
+  try {
+    const countdowns = await prisma.countdown.findMany({
+      orderBy: { target_date: 'asc' },
+      include: { user: { select: { username: true } } },
+    });
+    res.json(
+      countdowns.map(({ target_date, created_at, updated_at, user, ...rest }) => ({
+        ...rest,
+        targetDate: target_date,
+        createdAt: created_at,
+        updatedAt: updated_at,
+        author: user?.username ?? null,
+      }))
+    );
+  } catch (err) {
+    console.error('查询倒计时失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 创建一条倒计时（需登录），body: { name, targetDate }
+app.post('/api/countdowns', requireAuth, async (req, res) => {
+  try {
+    const { name, targetDate } = req.body || {};
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: '主题名不能为空' });
+    }
+    const parsedDate = new Date(targetDate);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ error: '目标日期无效' });
+    }
+    const countdown = await prisma.countdown.create({
+      data: {
+        name: String(name).trim(),
+        target_date: parsedDate,
+        user_id: req.user.userId,
+      },
+      include: { user: { select: { username: true } } },
+    });
+    const { target_date, created_at, updated_at, user, ...rest } = countdown;
+    res.status(201).json({
+      ...rest,
+      targetDate: target_date,
+      createdAt: created_at,
+      updatedAt: updated_at,
+      author: user?.username ?? null,
+    });
+  } catch (err) {
+    console.error('创建倒计时失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 更新一条倒计时（需登录），body: { name, targetDate }
+app.put('/api/countdowns/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
+    const existing = await prisma.countdown.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: '记录不存在' });
+
+    const { name, targetDate } = req.body || {};
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: '主题名不能为空' });
+    }
+    const parsedDate = new Date(targetDate);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ error: '目标日期无效' });
+    }
+
+    const countdown = await prisma.countdown.update({
+      where: { id },
+      data: { name: String(name).trim(), target_date: parsedDate },
+      include: { user: { select: { username: true } } },
+    });
+    const { target_date, created_at, updated_at, user, ...rest } = countdown;
+    res.json({
+      ...rest,
+      targetDate: target_date,
+      createdAt: created_at,
+      updatedAt: updated_at,
+      author: user?.username ?? null,
+    });
+  } catch (err) {
+    console.error('更新倒计时失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 删除一条倒计时（需登录）
+app.delete('/api/countdowns/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
+    const existing = await prisma.countdown.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: '记录不存在' });
+    await prisma.countdown.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('删除倒计时失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// ===== 留言板（右侧栏） =====
+
+// 查询全部留言，按发布时间倒序（最新在前，需登录）
+app.get('/api/messages', requireAuth, async (req, res) => {
+  try {
+    const messages = await prisma.message.findMany({
+      orderBy: { created_at: 'desc' },
+      include: { user: { select: { username: true } } },
+    });
+    res.json(
+      messages.map(({ created_at, updated_at, user, ...rest }) => ({
+        ...rest,
+        createdAt: created_at,
+        updatedAt: updated_at,
+        author: user?.username ?? null,
+      }))
+    );
+  } catch (err) {
+    console.error('查询留言失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 创建一条留言（需登录），body: { content }
+app.post('/api/messages', requireAuth, async (req, res) => {
+  try {
+    const { content } = req.body || {};
+    if (!content || !String(content).trim()) {
+      return res.status(400).json({ error: '留言内容不能为空' });
+    }
+    const message = await prisma.message.create({
+      data: { content: String(content).trim(), user_id: req.user.userId },
+      include: { user: { select: { username: true } } },
+    });
+    const { created_at, updated_at, user, ...rest } = message;
+    res.status(201).json({
+      ...rest,
+      createdAt: created_at,
+      updatedAt: updated_at,
+      author: user?.username ?? null,
+    });
+  } catch (err) {
+    console.error('创建留言失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 更新一条留言（需登录），body: { content }
+app.put('/api/messages/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
+    const existing = await prisma.message.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: '留言不存在' });
+
+    const { content } = req.body || {};
+    if (!content || !String(content).trim()) {
+      return res.status(400).json({ error: '留言内容不能为空' });
+    }
+
+    const message = await prisma.message.update({
+      where: { id },
+      data: { content: String(content).trim() },
+      include: { user: { select: { username: true } } },
+    });
+    const { created_at, updated_at, user, ...rest } = message;
+    res.json({
+      ...rest,
+      createdAt: created_at,
+      updatedAt: updated_at,
+      author: user?.username ?? null,
+    });
+  } catch (err) {
+    console.error('更新留言失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
+// 删除一条留言（需登录）
+app.delete('/api/messages/:id', requireAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
+    const existing = await prisma.message.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: '留言不存在' });
+    await prisma.message.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('删除留言失败:', err);
+    res.status(500).json({ error: '服务器内部错误' });
+  }
+});
+
 // ===== 图片直传 + 签名直链（Filebase 私有桶） =====
 //
 // Filebase 是标准 S3（SigV4，无 UA 校验）。bucket 是私有的，方案：

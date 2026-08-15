@@ -1,0 +1,242 @@
+/* 面板外壳（sticky 由父级 .app-side-left 控制） */
+.panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(233, 30, 99, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(233, 30, 99, 0.06);
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #c2185b;
+}
+
+.addBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e91e63, #c2185b);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.addBtn:hover {
+  opacity: 0.85;
+}
+
+.status {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.errorText {
+  color: #c62828;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px dashed #f0d4dd;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+/* 天数大字 */
+.daysBox {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fff0f5, #fce4ec);
+  border-radius: 14px;
+}
+
+.days {
+  font-size: 24px;
+  font-weight: 700;
+  color: #c2185b;
+  line-height: 1.1;
+}
+
+.daysUnit {
+  font-size: 11px;
+  color: #e91e63;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.linkBtn {
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: #aaa;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.linkBtn:hover {
+  color: #c2185b;
+}
+
+.danger:hover {
+  color: #c62828;
+}
+
+/* ===== 添加 / 编辑弹窗 ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 20px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 320px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #c2185b;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 14px;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #e91e63;
+}
+
+.error {
+  color: #c62828;
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+}
+
+.cancel,
+.save {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.save {
+  background: linear-gradient(135deg, #e91e63, #c2185b);
+  color: #fff;
+}
+
+.save:hover {
+  opacity: 0.9;
+}
+
+.save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 窄屏：面板不限制高度，跟随页面整体滚动 */
+@media (max-width: 1024px) {
+  .panel {
+    max-height: none;
+  }
+}

@@ -228,3 +228,175 @@ export async function deleteComment(token, commentId) {
   }
   return result;
 }
+
+// ===== 倒计时（左侧栏） =====
+
+// 获取倒计时列表（需登录），返回 [{ id, name, targetDate, author, createdAt, updatedAt }]
+export async function fetchCountdowns(token) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/countdowns`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+export async function createCountdown(token, data) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/countdowns`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+export async function updateCountdown(token, id, data) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/countdowns/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+export async function deleteCountdown(token, id) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/countdowns/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+// ===== 留言板（右侧栏） =====
+
+// 获取留言列表（需登录），返回 [{ id, content, author, createdAt, updatedAt }]
+export async function fetchMessages(token) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/messages`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+export async function createMessage(token, data) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+export async function updateMessage(token, id, data) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/messages/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}
+
+export async function deleteMessage(token, id) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/messages/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error('网络异常');
+  }
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(result.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return result;
+}

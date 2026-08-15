@@ -10,11 +10,13 @@ datasource db {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  username String   @unique @db.VarChar
-  password String   @db.VarChar
-  memories Memory[]
-  comments Comment[]
+  id         Int         @id @default(autoincrement())
+  username   String      @unique @db.VarChar
+  password   String      @db.VarChar
+  memories   Memory[]
+  comments   Comment[]
+  countdowns Countdown[]
+  messages   Message[]
 
   @@map("users")
 }
@@ -47,4 +49,29 @@ model Comment {
   user       User     @relation(fields: [user_id], references: [id])
 
   @@map("comments")
+}
+
+// 倒计时 / 正计时：目标日期在未来显示「还有 N 天」，在过去显示「已经 N 天」
+model Countdown {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100) // 主题名：纪念日 / 生日…
+  target_date DateTime @db.Timestamptz(6)
+  user_id     Int
+  user        User     @relation(fields: [user_id], references: [id])
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("countdowns")
+}
+
+// 留言板（右侧栏）：显示内容 + 日期 + 作者
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String   @db.Text
+  user_id    Int
+  user       User     @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("messages")
 }

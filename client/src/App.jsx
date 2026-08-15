@@ -4,6 +4,8 @@ import Login from './Login';
 import AddMemory from './AddMemory';
 import EditMemory from './EditMemory';
 import MemoryList from './components/MemoryList/MemoryList';
+import CountdownPanel from './components/CountdownPanel/CountdownPanel';
+import MessageBoard from './components/MessageBoard/MessageBoard';
 import { fetchMe, fetchMemories, deleteMemory } from './api';
 
 function App() {
@@ -112,11 +114,21 @@ function App() {
       {authState === 'loggedIn' && loading && <p className="app-status">加载中…</p>}
       {authState === 'loggedIn' && error && <p className="app-status app-error">{error}</p>}
       {authState === 'loggedIn' && !loading && !error && (
-        <MemoryList
-          memories={memories}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <div className="app-body">
+          <aside className="app-side-left">
+            <CountdownPanel />
+          </aside>
+          <main className="app-center">
+            <MemoryList
+              memories={memories}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </main>
+          <aside className="app-side-right">
+            <MessageBoard />
+          </aside>
+        </div>
       )}
       {authState === 'loggedIn' && (
         <button className="fab" onClick={() => setShowAdd(true)} title="添加回忆">+</button>
