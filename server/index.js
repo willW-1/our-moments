@@ -67,6 +67,17 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// 角色权限中间件：requireAuth 之后使用，限定只有指定角色能继续。
+// user=使用者（可增删改所有内容）；viewer=旁观者（仅可在留言板留言/回复，其余只读）
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: '没有权限执行此操作（旁观者账号仅可在留言板留言）' });
+    }
+    next();
+  };
+}
+
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from server!' });
 });
@@ -131,7 +142,7 @@ app.get('/api/memories', requireAuth, async (req, res) => {
 
 // 创建一条 memory（需登录），user_id 取当前登录用户
 // body: { type, title, date, location?, description?, imageUrl?, imageKey? }
-app.post('/api/memories', requireAuth, async (req, res) => {
+app.post('/api/memories', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const { type, title, date, location, description, imageUrl, imageKey } = req.body || {};
 
@@ -175,7 +186,7 @@ app.post('/api/memories', requireAuth, async (req, res) => {
 
 // 更新一条 memory（需登录；权限已开放，任何登录用户都可改）
 // body: { type, title, date, location?, description?, imageUrl? }
-app.put('/api/memories/:id', requireAuth, async (req, res) => {
+app.put('/api/memories/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) {
@@ -227,7 +238,7 @@ app.put('/api/memories/:id', requireAuth, async (req, res) => {
 });
 
 // 删除一条 memory（需登录；权限已开放，任何登录用户都可删）
-app.delete('/api/memories/:id', requireAuth, async (req, res) => {
+app.delete('/api/memories/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) {
@@ -251,7 +262,7 @@ app.delete('/api/memories/:id', requireAuth, async (req, res) => {
 
 // 创建一条评论（需登录），body: { content, parentId? }
 // parentId 为空 → 顶层评论；非空 → 对该评论的回复（回复挂到最顶层评论下，只做一层嵌套）
-app.post('/api/memories/:id/comments', requireAuth, async (req, res) => {
+app.post('/api/memories/:id/comments', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const memoryId = parseInt(req.params.id, 10);
     if (isNaN(memoryId)) {
@@ -308,7 +319,7 @@ app.post('/api/memories/:id/comments', requireAuth, async (req, res) => {
 });
 
 // 编辑评论（需登录；权限已开放，任何登录用户都可改），body: { content }
-app.put('/api/comments/:id', requireAuth, async (req, res) => {
+app.put('/api/comments/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) {
@@ -346,7 +357,7 @@ app.put('/api/comments/:id', requireAuth, async (req, res) => {
 });
 
 // 删除评论（需登录；权限已开放，任何登录用户都可删）
-app.delete('/api/comments/:id', requireAuth, async (req, res) => {
+app.delete('/api/comments/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) {
@@ -392,7 +403,7 @@ app.get('/api/countdowns', requireAuth, async (req, res) => {
 });
 
 // 创建一条倒计时（需登录），body: { name, targetDate }
-app.post('/api/countdowns', requireAuth, async (req, res) => {
+app.post('/api/countdowns', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const { name, targetDate } = req.body || {};
     if (!name || !String(name).trim()) {
@@ -425,7 +436,7 @@ app.post('/api/countdowns', requireAuth, async (req, res) => {
 });
 
 // 更新一条倒计时（需登录），body: { name, targetDate }
-app.put('/api/countdowns/:id', requireAuth, async (req, res) => {
+app.put('/api/countdowns/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
@@ -461,7 +472,7 @@ app.put('/api/countdowns/:id', requireAuth, async (req, res) => {
 });
 
 // 删除一条倒计时（需登录）
-app.delete('/api/countdowns/:id', requireAuth, async (req, res) => {
+app.delete('/api/countdowns/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
@@ -536,7 +547,7 @@ app.post('/api/messages', requireAuth, async (req, res) => {
 });
 
 // 更新一条留言（需登录），body: { content }
-app.put('/api/messages/:id', requireAuth, async (req, res) => {
+app.put('/api/messages/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
@@ -567,7 +578,7 @@ app.put('/api/messages/:id', requireAuth, async (req, res) => {
 });
 
 // 删除一条留言（需登录）
-app.delete('/api/messages/:id', requireAuth, async (req, res) => {
+app.delete('/api/messages/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
@@ -614,7 +625,7 @@ app.post('/api/messages/:id/replies', requireAuth, async (req, res) => {
 });
 
 // 编辑一条留言回复（需登录），body: { content }
-app.put('/api/message-replies/:id', requireAuth, async (req, res) => {
+app.put('/api/message-replies/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
@@ -645,7 +656,7 @@ app.put('/api/message-replies/:id', requireAuth, async (req, res) => {
 });
 
 // 删除一条留言回复（需登录）
-app.delete('/api/message-replies/:id', requireAuth, async (req, res) => {
+app.delete('/api/message-replies/:id', requireAuth, requireRole('user'), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(400).json({ error: '无效的 id' });
@@ -669,7 +680,7 @@ app.delete('/api/message-replies/:id', requireAuth, async (req, res) => {
 
 // 生成直传地址（需登录）：body: { contentType?, fileName? }
 // 返回 { key, contentType, uploadUrl, getUrl } —— uploadUrl 用于浏览器直接 PUT，getUrl 是签名直链（预览用）
-app.post('/api/upload', requireAuth, async (req, res) => {
+app.post('/api/upload', requireAuth, requireRole('user'), async (req, res) => {
   if (!bucket) {
     return res.status(500).json({ error: '服务端未配置对象存储（CSTCLOUD_BUCKET 等环境变量）' });
   }
@@ -711,7 +722,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     const token = uuidv4();
-    tokenStore.set(token, { userId: user.id, username: user.username });
+    tokenStore.set(token, { userId: user.id, username: user.username, role: user.role });
     res.json({ success: true, token });
   } catch (err) {
     console.error('登录失败:', err);
@@ -728,7 +739,7 @@ app.get('/api/me', (req, res) => {
   if (!user) {
     return res.status(401).json({ error: '无效或过期的 token' });
   }
-  res.json({ username: user.username });
+  res.json({ username: user.username, role: user.role });
 });
 
 app.listen(PORT, () => {

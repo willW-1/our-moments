@@ -13,6 +13,7 @@ model User {
   id             Int            @id @default(autoincrement())
   username       String         @unique @db.VarChar
   password       String         @db.VarChar
+  role           String         @default("user") @db.VarChar // user=使用者 / viewer=旁观者
   memories       Memory[]
   comments       Comment[]
   countdowns     Countdown[]

@@ -15,6 +15,15 @@ body {
   padding-bottom: 100px;
 }
 
+/* ===== 顶部整体（header + 手机端 Tab）：整块吸顶 =====
+   把 header 和 Tab 条放进同一个 sticky 容器，滚动时整块固定在顶部，
+   避免之前 Tab 条单独 sticky 时被更长的页头遮挡。 */
+.app-top {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 /* ===== Header ===== */
 .app-header {
   display: flex;
@@ -25,9 +34,6 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(233, 30, 99, 0.08);
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
 
 .app-logo {
@@ -139,9 +145,6 @@ body {
 @media (max-width: 1024px) {
   .app-tabs {
     display: flex;
-    position: sticky;
-    top: 60px;
-    z-index: 90;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);

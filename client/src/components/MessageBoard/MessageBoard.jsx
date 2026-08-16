@@ -12,7 +12,7 @@ import { formatDateTime } from '../../formatTime';
 import styles from './MessageBoard.module.css';
 
 // 留言板：每条留言显示内容 + 日期 + 作者，支持一层回复
-function MessageBoard() {
+function MessageBoard({ isViewer }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -245,19 +245,25 @@ function MessageBoard() {
 
             {editingId !== msg.id && (
               <div className={styles.itemActions}>
+                {/* 旁观者也可以回复留言 */}
                 <button type="button" className={styles.linkBtn} onClick={() => startReply(msg)}>
                   回复
                 </button>
-                <button type="button" className={styles.linkBtn} onClick={() => startEdit(msg)}>
-                  编辑
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.linkBtn} ${styles.danger}`}
-                  onClick={() => handleDelete(msg)}
-                >
-                  删除
-                </button>
+                {/* 旁观者不显示编辑/删除 */}
+                {!isViewer && (
+                  <>
+                    <button type="button" className={styles.linkBtn} onClick={() => startEdit(msg)}>
+                      编辑
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.linkBtn} ${styles.danger}`}
+                      onClick={() => handleDelete(msg)}
+                    >
+                      删除
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
@@ -326,7 +332,7 @@ function MessageBoard() {
                       <p className={styles.content}>{reply.content}</p>
                     )}
 
-                    {editingReplyId !== reply.id && (
+                    {editingReplyId !== reply.id && !isViewer && (
                       <div className={styles.itemActions}>
                         <button
                           type="button"

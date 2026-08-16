@@ -4,7 +4,7 @@ import { formatRelativeTime } from '../../formatTime';
 import styles from './Comments.module.css';
 
 // 回忆卡片下的评论：支持一层回复（每条评论下有 replies 列表）
-function Comments({ memoryId, comments: initialComments }) {
+function Comments({ memoryId, comments: initialComments, isViewer }) {
   const [comments, setComments] = useState(initialComments || []);
   const [draft, setDraft] = useState(''); // 新顶层评论输入
   const [error, setError] = useState('');
@@ -167,19 +167,22 @@ function Comments({ memoryId, comments: initialComments }) {
 
   return (
     <div className={styles.wrapper}>
-      <form className={styles.addForm} onSubmit={handleAdd}>
-        <input
-          className={styles.input}
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="写下你的评论…"
-          disabled={submitting}
-        />
-        <button className={styles.submit} type="submit" disabled={submitting || !draft.trim()}>
-          评论
-        </button>
-      </form>
+      {/* 旁观者只能看评论，不能发表 */}
+      {!isViewer && (
+        <form className={styles.addForm} onSubmit={handleAdd}>
+          <input
+            className={styles.input}
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="写下你的评论…"
+            disabled={submitting}
+          />
+          <button className={styles.submit} type="submit" disabled={submitting || !draft.trim()}>
+            评论
+          </button>
+        </form>
+      )}
 
       {error && <p className={styles.error}>{error}</p>}
 
@@ -217,7 +220,7 @@ function Comments({ memoryId, comments: initialComments }) {
               <p className={styles.content}>{comment.content}</p>
             )}
 
-            {editingId !== comment.id && (
+            {editingId !== comment.id && !isViewer && (
               <div className={styles.itemActions}>
                 <button type="button" className={styles.linkBtn} onClick={() => startReply(comment)}>
                   回复
@@ -300,7 +303,7 @@ function Comments({ memoryId, comments: initialComments }) {
                       <p className={styles.content}>{reply.content}</p>
                     )}
 
-                    {editingReplyId !== reply.id && (
+                    {editingReplyId !== reply.id && !isViewer && (
                       <div className={styles.itemActions}>
                         <button
                           type="button"

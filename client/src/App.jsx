@@ -32,6 +32,8 @@ function App() {
   const [editingMemory, setEditingMemory] = useState(null);
   // 手机端顶部 Tab：倒计时 / 回忆 / 留言板（桌面三栏不受影响）
   const [mobileTab, setMobileTab] = useState('memories');
+  // 当前登录用户角色：user=使用者 / viewer=旁观者（登录校验时从 /api/me 取）
+  const [role, setRole] = useState('user');
 
   // 1) 启动时检查 localStorage 的 token，并用 /api/me 验证；无效则清除
   useEffect(() => {
@@ -42,8 +44,11 @@ function App() {
       return;
     }
     fetchMe(token)
-      .then(() => {
-        if (!cancelled) setAuthState('loggedIn');
+      .then((me) => {
+        if (!cancelled) {
+          if (me && me.role) setRole(me.role);
+          setAuthState('loggedIn');
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -109,6 +114,9 @@ function App() {
     }
   };
 
+  // 旁观者：只读 + 仅可在留言板留言，全站隐藏增删改入口
+  const isViewer = role === 'viewer';
+
   if (authState === 'loggedOut') {
     return (
       <div className="app">
@@ -120,59 +128,64 @@ function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <span className="app-logo">💝</span>
-        <span className="app-title">Our Moments</span>
-        <span className="app-nav">我们的故事</span>
-        {authState === 'loggedIn' && (
-          <span className="app-logout" onClick={handleLogout}>退出</span>
-        )}
-      </header>
-      {/* 手机端顶部 Tab：倒计时 / 回忆 / 留言板（桌面不显示） */}
-      <nav className="app-tabs">
-        <button
-          type="button"
-          className={`tab-btn ${mobileTab === 'countdown' ? 'active' : ''}`}
-          onClick={() => setMobileTab('countdown')}
-        >
-          ⏳ 倒计时
-        </button>
-        <button
-          type="button"
-          className={`tab-btn ${mobileTab === 'memories' ? 'active' : ''}`}
-          onClick={() => setMobileTab('memories')}
-        >
-          📷 回忆
-        </button>
-        <button
-          type="button"
-          className={`tab-btn ${mobileTab === 'messages' ? 'active' : ''}`}
-          onClick={() => setMobileTab('messages')}
-        >
-          💬 留言板
-        </button>
-      </nav>
+      {/* 顶部整体（header + 手机端 Tab）吸顶：滚动时整块固定，避免 Tab 条被页头遮挡 */}
+      <div className="app-top">
+        <header className="app-header">
+          <span className="app-logo">💝</span>
+          <span className="app-title">Our Moments</span>
+          <span className="app-nav">我们的故事</span>
+          {authState === 'loggedIn' && (
+            <span className="app-logout" onClick={handleLogout}>退出</span>
+          )}
+        </header>
+        {/* 手机端顶部 Tab：倒计时 / 回忆 / 留言板（桌面不显示） */}
+        <nav className="app-tabs">
+          <button
+            type="button"
+            className={`tab-btn ${mobileTab === 'countdown' ? 'active' : ''}`}
+            onClick={() => setMobileTab('countdown')}
+          >
+            ⏳ 倒计时
+          </button>
+          <button
+            type="button"
+            className={`tab-btn ${mobileTab === 'memories' ? 'active' : ''}`}
+            onClick={() => setMobileTab('memories')}
+          >
+            📷 回忆
+          </button>
+          <button
+            type="button"
+            className={`tab-btn ${mobileTab === 'messages' ? 'active' : ''}`}
+            onClick={() => setMobileTab('messages')}
+          >
+            💬 留言板
+          </button>
+        </nav>
+      </div>
       {authState === 'checking' && <p className="app-status">加载中…</p>}
       {authState === 'loggedIn' && loading && <p className="app-status">加载中…</p>}
       {authState === 'loggedIn' && error && <p className="app-status app-error">{error}</p>}
       {authState === 'loggedIn' && !loading && !error && (
         <div className="app-body">
           <aside className={`app-side-left ${mobileTab === 'countdown' ? 'active' : ''}`}>
-            <CountdownPanel />
+            <CountdownPanel isViewer={isViewer} />
           </aside>
           <main className={`app-center ${mobileTab === 'memories' ? 'active' : ''}`}>
             <MemoryList
               memories={memories}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              isViewer={isViewer}
             />
           </main>
           <aside className={`app-side-right ${mobileTab === 'messages' ? 'active' : ''}`}>
-            <MessageBoard />
+            <MessageBoard isViewer={isViewer} />
           </aside>
         </div>
       )}
-      {authState === 'loggedIn' && (
+      {/* 旁观者不显示添加回忆的 ＋ 按钮 */}
+      {authState === 'loggedIn' && !isViewer && (
         <button className="fab" onClick={() => setShowAdd(true)} title="添加回忆">+</button>
       )}
       {authState === 'loggedIn' && showAdd && (

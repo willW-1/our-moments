@@ -24,7 +24,7 @@ const TYPE_ICONS = {
   其他: '📌',
 };
 
-function MemoryCard({ memory, onEdit, onDelete }) {
+function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
   const { type, title, date, location, description, imageUrl, author, createdAt, comments } = memory;
   const icon = TYPE_ICONS[type] || TYPE_ICONS.other;
   // 点击图片放大（lightbox）：点遮罩或 ✕ 关闭
@@ -52,22 +52,25 @@ function MemoryCard({ memory, onEdit, onDelete }) {
 
   return (
     <div className={styles.card}>
-      <div className={styles.actions}>
-        <button
-          className={styles.actionBtn}
-          onClick={() => onEdit(memory)}
-          title="编辑这条回忆"
-        >
-          编辑
-        </button>
-        <button
-          className={`${styles.actionBtn} ${styles.deleteBtn}`}
-          onClick={() => onDelete(memory)}
-          title="删除这条回忆"
-        >
-          删除
-        </button>
-      </div>
+      {/* 旁观者不显示编辑/删除 */}
+      {!isViewer && (
+        <div className={styles.actions}>
+          <button
+            className={styles.actionBtn}
+            onClick={() => onEdit(memory)}
+            title="编辑这条回忆"
+          >
+            编辑
+          </button>
+          <button
+            className={`${styles.actionBtn} ${styles.deleteBtn}`}
+            onClick={() => onDelete(memory)}
+            title="删除这条回忆"
+          >
+            删除
+          </button>
+        </div>
+      )}
       <div className={styles.inner}>
         <div className={styles.iconArea}>{icon}</div>
         <div className={styles.content}>
@@ -114,7 +117,7 @@ function MemoryCard({ memory, onEdit, onDelete }) {
           )}
         </>
       )}
-      <Comments memoryId={memory.id} comments={comments} />
+      <Comments memoryId={memory.id} comments={comments} isViewer={isViewer} />
     </div>
   );
 }

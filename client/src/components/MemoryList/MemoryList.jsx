@@ -1,7 +1,7 @@
 import MemoryCard from '../MemoryCard/MemoryCard';
 import styles from './MemoryList.module.css';
 
-function MemoryList({ memories, onEdit, onDelete }) {
+function MemoryList({ memories, onEdit, onDelete, isViewer }) {
   const sorted = [...memories].sort((a, b) => {
     const dateA = a.date ? new Date(a.date) : new Date(0);
     const dateB = b.date ? new Date(b.date) : new Date(0);
@@ -22,6 +22,7 @@ function MemoryList({ memories, onEdit, onDelete }) {
           memory={memory}
           onEdit={onEdit}
           onDelete={onDelete}
+          isViewer={isViewer}
         />
       ))}
     </div>

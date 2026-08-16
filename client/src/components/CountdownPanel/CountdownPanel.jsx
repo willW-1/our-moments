@@ -20,7 +20,7 @@ function formatDate(dateStr) {
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-function CountdownPanel() {
+function CountdownPanel({ isViewer }) {
   const [countdowns, setCountdowns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -117,15 +117,18 @@ function CountdownPanel() {
     <div className={styles.panel}>
       <div className={styles.header}>
         <span className={styles.title}>⏳ 倒计时</span>
-        <button type="button" className={styles.addBtn} onClick={openAdd} title="添加倒计时">
-          ＋
-        </button>
+        {/* 旁观者不显示添加按钮 */}
+        {!isViewer && (
+          <button type="button" className={styles.addBtn} onClick={openAdd} title="添加倒计时">
+            ＋
+          </button>
+        )}
       </div>
 
       {loading && <p className={styles.status}>加载中…</p>}
       {!loading && error && <p className={`${styles.status} ${styles.errorText}`}>{error}</p>}
       {!loading && !error && countdowns.length === 0 && (
-        <p className={styles.status}>还没有倒计时，点 ＋ 添加一个</p>
+        <p className={styles.status}>{isViewer ? '还没有倒计时' : '还没有倒计时，点 ＋ 添加一个'}</p>
       )}
 
       <ul className={styles.list}>
@@ -149,18 +152,20 @@ function CountdownPanel() {
                 </p>
                 <p className={styles.date}>{formatDate(c.targetDate)}</p>
               </div>
-              <div className={styles.actions}>
-                <button type="button" className={styles.linkBtn} onClick={() => openEdit(c)}>
-                  编辑
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.linkBtn} ${styles.danger}`}
-                  onClick={() => handleDelete(c)}
-                >
-                  删除
-                </button>
-              </div>
+              {!isViewer && (
+                <div className={styles.actions}>
+                  <button type="button" className={styles.linkBtn} onClick={() => openEdit(c)}>
+                    编辑
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.linkBtn} ${styles.danger}`}
+                    onClick={() => handleDelete(c)}
+                  >
+                    删除
+                  </button>
+                </div>
+              )}
             </li>
           );
         })}
