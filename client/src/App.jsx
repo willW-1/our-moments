@@ -30,6 +30,8 @@ function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   // 正在编辑的 memory
   const [editingMemory, setEditingMemory] = useState(null);
+  // 手机端顶部 Tab：倒计时 / 回忆 / 留言板（桌面三栏不受影响）
+  const [mobileTab, setMobileTab] = useState('memories');
 
   // 1) 启动时检查 localStorage 的 token，并用 /api/me 验证；无效则清除
   useEffect(() => {
@@ -126,22 +128,46 @@ function App() {
           <span className="app-logout" onClick={handleLogout}>退出</span>
         )}
       </header>
+      {/* 手机端顶部 Tab：倒计时 / 回忆 / 留言板（桌面不显示） */}
+      <nav className="app-tabs">
+        <button
+          type="button"
+          className={`tab-btn ${mobileTab === 'countdown' ? 'active' : ''}`}
+          onClick={() => setMobileTab('countdown')}
+        >
+          ⏳ 倒计时
+        </button>
+        <button
+          type="button"
+          className={`tab-btn ${mobileTab === 'memories' ? 'active' : ''}`}
+          onClick={() => setMobileTab('memories')}
+        >
+          📷 回忆
+        </button>
+        <button
+          type="button"
+          className={`tab-btn ${mobileTab === 'messages' ? 'active' : ''}`}
+          onClick={() => setMobileTab('messages')}
+        >
+          💬 留言板
+        </button>
+      </nav>
       {authState === 'checking' && <p className="app-status">加载中…</p>}
       {authState === 'loggedIn' && loading && <p className="app-status">加载中…</p>}
       {authState === 'loggedIn' && error && <p className="app-status app-error">{error}</p>}
       {authState === 'loggedIn' && !loading && !error && (
         <div className="app-body">
-          <aside className="app-side-left">
+          <aside className={`app-side-left ${mobileTab === 'countdown' ? 'active' : ''}`}>
             <CountdownPanel />
           </aside>
-          <main className="app-center">
+          <main className={`app-center ${mobileTab === 'memories' ? 'active' : ''}`}>
             <MemoryList
               memories={memories}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
           </main>
-          <aside className="app-side-right">
+          <aside className={`app-side-right ${mobileTab === 'messages' ? 'active' : ''}`}>
             <MessageBoard />
           </aside>
         </div>

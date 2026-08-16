@@ -107,8 +107,47 @@ body {
   max-width: 640px;
 }
 
-/* 窄屏（手机）：三栏改上下堆叠，左右面板不再固定 */
+/* ===== 手机端顶部 Tab（桌面隐藏）===== */
+.app-tabs {
+  display: none;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 11px 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #999;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-bottom-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab-btn:hover {
+  color: #c2185b;
+}
+
+.tab-btn.active {
+  color: #c2185b;
+  border-bottom-color: #e91e63;
+}
+
+/* 窄屏（手机）：三栏改顶部 Tab 切换，一次只显示一栏 */
 @media (max-width: 1024px) {
+  .app-tabs {
+    display: flex;
+    position: sticky;
+    top: 60px;
+    z-index: 90;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(233, 30, 99, 0.08);
+  }
+
   .app-body {
     flex-direction: column;
     align-items: stretch;
@@ -120,6 +159,17 @@ body {
   .app-side-right {
     position: static;
     width: 100%;
+  }
+
+  .app-center {
+    max-width: 100%;
+  }
+
+  /* 只显示当前选中的 Tab 面板，其余隐藏 */
+  .app-side-left:not(.active),
+  .app-center:not(.active),
+  .app-side-right:not(.active) {
+    display: none;
   }
 }
 
