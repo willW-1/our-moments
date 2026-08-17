@@ -6,6 +6,7 @@ import EditMemory from './EditMemory';
 import MemoryList from './components/MemoryList/MemoryList';
 import CountdownPanel from './components/CountdownPanel/CountdownPanel';
 import MessageBoard from './components/MessageBoard/MessageBoard';
+import WelcomeModal from './components/WelcomeModal/WelcomeModal';
 import { fetchMe, fetchMemories, deleteMemory } from './api';
 
 // 页脚：技术栈小字 + 特别鸣谢大字（登录前后都显示在页面最下方）
@@ -34,6 +35,10 @@ function App() {
   const [mobileTab, setMobileTab] = useState('memories');
   // 当前登录用户角色：user=使用者 / viewer=旁观者（登录校验时从 /api/me 取）
   const [role, setRole] = useState('user');
+  // 当前登录用户名（欢迎弹窗显示）
+  const [username, setUsername] = useState('');
+  // 欢迎弹窗：登录校验成功后展示，需手动关闭
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // 1) 启动时检查 localStorage 的 token，并用 /api/me 验证；无效则清除
   useEffect(() => {
@@ -47,7 +52,9 @@ function App() {
       .then((me) => {
         if (!cancelled) {
           if (me && me.role) setRole(me.role);
+          if (me && me.username) setUsername(me.username);
           setAuthState('loggedIn');
+          setShowWelcome(true);
         }
       })
       .catch(() => {
@@ -206,6 +213,10 @@ function App() {
             setRefreshKey((k) => k + 1); // 刷新记忆列表
           }}
         />
+      )}
+      {/* 欢迎弹窗：登录成功后展示 GitHub 最近更新，需手动关闭 */}
+      {authState === 'loggedIn' && showWelcome && (
+        <WelcomeModal username={username} onClose={() => setShowWelcome(false)} />
       )}
       {authState === 'loggedIn' && appFooter}
     </div>
