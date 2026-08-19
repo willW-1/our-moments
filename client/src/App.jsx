@@ -7,6 +7,7 @@ import MemoryList from './components/MemoryList/MemoryList';
 import CountdownPanel from './components/CountdownPanel/CountdownPanel';
 import MessageBoard from './components/MessageBoard/MessageBoard';
 import WelcomeModal from './components/WelcomeModal/WelcomeModal';
+import LetterModal from './components/LetterModal/LetterModal';
 import ParticleField from './components/ParticleField/ParticleField';
 import ThemeToggle from './components/ThemeToggle/ThemeToggle';
 import { HeartLogo, ClockIcon, CameraIcon, ChatIcon, PlusIcon } from './components/icons';
@@ -51,6 +52,8 @@ function App() {
   const [username, setUsername] = useState('');
   // 欢迎弹窗：登录校验成功后展示，需手动关闭
   const [showWelcome, setShowWelcome] = useState(false);
+  // 生日信弹窗：wyc 登录时先展示（在更新内容弹窗之前），需手动关闭
+  const [showLetter, setShowLetter] = useState(false);
   // 日夜主题：luxe=星河暗夜（默认），luxe-day=星河白昼；与 main.jsx 的初始逻辑一致
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('our-moments-theme');
@@ -78,7 +81,12 @@ function App() {
           if (me && me.role) setRole(me.role);
           if (me && me.username) setUsername(me.username);
           setAuthState('loggedIn');
-          setShowWelcome(true);
+          // wyc 先看生日信，关闭后再展示更新内容弹窗；其他用户直接展示更新弹窗
+          if (me && me.username === 'wyc') {
+            setShowLetter(true);
+          } else {
+            setShowWelcome(true);
+          }
         }
       })
       .catch(() => {
@@ -243,6 +251,15 @@ function App() {
           onUpdated={() => {
             setEditingMemory(null);
             setRefreshKey((k) => k + 1); // 刷新记忆列表
+          }}
+        />
+      )}
+      {/* 生日信弹窗：wyc 登录时先展示；关闭后才轮到更新内容弹窗 */}
+      {authState === 'loggedIn' && showLetter && (
+        <LetterModal
+          onClose={() => {
+            setShowLetter(false);
+            setShowWelcome(true);
           }}
         />
       )}

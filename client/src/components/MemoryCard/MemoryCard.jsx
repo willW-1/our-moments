@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import styles from './MemoryCard.module.css';
 import Comments from '../Comments/Comments';
+import useRevealOnScroll from '../../useRevealOnScroll';
 import { formatRelativeTime } from '../../formatTime';
 import { resolveImageUrl } from '../../api';
 import {
@@ -32,6 +33,8 @@ const TYPE_ICONS = {
 function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
   const { type, title, date, location, description, imageUrl, author, createdAt, comments } = memory;
   const TypeIcon = TYPE_ICONS[type] || TYPE_ICONS.other;
+  // 滚动进入视口逐步显现：初始透明 + 稍下移，进入后过渡到完全显示
+  const { ref: cardRef, revealed } = useRevealOnScroll();
   // 点击图片放大（lightbox）：点遮罩或 ✕ 关闭
   const [zoomed, setZoomed] = useState(false);
 
@@ -56,7 +59,10 @@ function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
   };
 
   return (
-    <div className={styles.card}>
+    <div
+      ref={cardRef}
+      className={`${styles.card} ${styles.reveal} ${revealed ? styles.revealed : ''}`}
+    >
       {/* 旁观者不显示编辑/删除 */}
       {!isViewer && (
         <div className={styles.actions}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchCountdowns, createCountdown, updateCountdown, deleteCountdown } from '../../api';
 import { ClockIcon, PlusIcon } from '../icons';
+import Reveal from '../Reveal/Reveal';
 import styles from './CountdownPanel.module.css';
 
 // 目标日期在未来的 → 倒计时「还有 N 天」；在过去的 → 正计时「已经 N 天」
@@ -136,7 +137,7 @@ function CountdownPanel({ isViewer }) {
         {countdowns.map((c) => {
           const days = daysFromNow(c.targetDate);
           return (
-            <li key={c.id} className={styles.item}>
+            <Reveal as="li" key={c.id} className={styles.item}>
               <div className={styles.daysBox}>
                 {days === null ? (
                   <span className={styles.days}>—</span>
@@ -167,7 +168,7 @@ function CountdownPanel({ isViewer }) {
                   </button>
                 </div>
               )}
-            </li>
+            </Reveal>
           );
         })}
       </ul>

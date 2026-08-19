@@ -9,6 +9,22 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.3s ease, border-color 0.3s ease;
 }
 
+/* 滚动进入视口逐步显现：初始透明 + 稍下移，进入后过渡到完全显示
+   （优先级盖过 :root[data-theme] .card 的主题过渡，保证 opacity/transform 能过渡；
+     .revealed 不声明 transform，让目标值回到基础样式，避免盖掉 hover 上浮） */
+.card.reveal:not(.revealed) {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s ease, background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.card.reveal.revealed {
+  opacity: 1;
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s ease, background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
 .card:hover {
   box-shadow: var(--card-hover-shadow);
   transform: translateY(-3px);

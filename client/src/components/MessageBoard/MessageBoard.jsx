@@ -10,6 +10,7 @@ import {
 } from '../../api';
 import { formatDateTime } from '../../formatTime';
 import { ChatIcon, UserIcon } from '../icons';
+import Reveal from '../Reveal/Reveal';
 import styles from './MessageBoard.module.css';
 
 // 留言板：每条留言显示内容 + 日期 + 作者，支持一层回复
@@ -212,7 +213,7 @@ function MessageBoard({ isViewer }) {
 
       <ul className={styles.list}>
         {messages.map((msg) => (
-          <li key={msg.id} className={styles.item}>
+          <Reveal as="li" key={msg.id} className={styles.item}>
             <div className={styles.meta}>
               <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {msg.author || '匿名'}</span>
               <span className={styles.time}>{formatDateTime(msg.createdAt)}</span>
@@ -355,7 +356,7 @@ function MessageBoard({ isViewer }) {
                 ))}
               </ul>
             )}
-          </li>
+          </Reveal>
         ))}
       </ul>
     </div>

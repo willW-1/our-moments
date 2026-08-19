@@ -8,6 +8,18 @@
   /* 背景由 .bg 固定层提供，这里保持透明 */
 }
 
+/* 登录卡片进场：初始透明 + 稍下移，随后过渡到完全显示 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 .card {
   width: 100%;
   max-width: 380px;
@@ -21,6 +33,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
 }
 
 .logo {

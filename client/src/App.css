@@ -146,6 +146,43 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
+  /* 登录成功进场：初始透明 + 稍下移，逐步过渡到完全显示 */
+  animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* ===== 登录成功进场动画：初始透明 + 稍下移，随后过渡到完全显示 =====
+   backwards 填充：延迟期间保持「透明 + 下移」，动画结束后恢复自然状态（不影响 hover 等） */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.app-body {
+  animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.12s backwards;
+}
+
+.app-footer {
+  animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
+}
+
+.fab {
+  animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.26s backwards;
+}
+
+/* 用户偏好减少动效：不做进场动画 */
+@media (prefers-reduced-motion: reduce) {
+  .app-top,
+  .app-body,
+  .app-footer,
+  .fab {
+    animation: none;
+  }
 }
 
 /* ===== Header（苹果式毛玻璃导航栏） ===== */
@@ -174,6 +211,10 @@ body {
   letter-spacing: 0.6px;
   flex: 1;
   min-width: 0;
+  /* 单行 + 超出省略：窄屏时标题收缩为省略号，杜绝文字溢出压住 logo / 导航 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background: var(--accent-grad);
   -webkit-background-clip: text;
   background-clip: text;
@@ -190,6 +231,7 @@ body {
   background: var(--accent-soft);
   transition: background 0.25s ease, color 0.25s ease;
   white-space: nowrap;
+  flex-shrink: 0; /* 窄屏不让导航被压扁 */
 }
 
 .app-nav:hover {
@@ -206,11 +248,35 @@ body {
   border: 1px solid var(--divider);
   transition: color 0.2s, border-color 0.2s;
   white-space: nowrap;
+  flex-shrink: 0; /* 窄屏不让退出按钮被压扁 */
 }
 
 .app-logout:hover {
   color: var(--danger);
   border-color: var(--danger-soft);
+}
+
+/* ===== 窄屏（手机）：压缩 Header 间距字号，保证 logo 与「我们的故事」不互相遮挡 ===== */
+@media (max-width: 768px) {
+  .app-header {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .app-title {
+    font-size: 18px;
+    letter-spacing: 0.3px;
+  }
+
+  .app-nav {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .app-logout {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
 }
 
 /* ===== 加载 / 错误状态 ===== */
