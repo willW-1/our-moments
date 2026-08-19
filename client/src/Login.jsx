@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { login } from './api';
+import { HeartLogo } from './components/icons';
 import styles from './Login.module.css';
 
 function Login({ onLoginSuccess }) {
@@ -26,7 +27,7 @@ function Login({ onLoginSuccess }) {
   return (
     <div className={styles.page}>
       <form className={styles.card} onSubmit={handleSubmit}>
-        <div className={styles.logo}>💝</div>
+        <div className={styles.logo}><HeartLogo size={56} /></div>
         <h1 className={styles.title}>Our Moments</h1>
         <p className={styles.subtitle}>我们的故事</p>
         <input

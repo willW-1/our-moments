@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchCountdowns, createCountdown, updateCountdown, deleteCountdown } from '../../api';
+import { ClockIcon, PlusIcon } from '../icons';
 import styles from './CountdownPanel.module.css';
 
 // 目标日期在未来的 → 倒计时「还有 N 天」；在过去的 → 正计时「已经 N 天」
@@ -116,11 +117,11 @@ function CountdownPanel({ isViewer }) {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <span className={styles.title}>⏳ 倒计时</span>
+        <span className={styles.title}><ClockIcon size={16} strokeWidth={1.8} /> 倒计时</span>
         {/* 旁观者不显示添加按钮 */}
         {!isViewer && (
           <button type="button" className={styles.addBtn} onClick={openAdd} title="添加倒计时">
-            ＋
+            <PlusIcon size={16} strokeWidth={2} />
           </button>
         )}
       </div>

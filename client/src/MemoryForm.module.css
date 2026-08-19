@@ -2,7 +2,9 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,35 +12,40 @@
   padding: 20px;
 }
 
-/* 居中白色卡片 */
+/* 居中卡片 */
 .modal {
   width: 100%;
   max-width: 420px;
   max-height: 90vh;
   overflow-y: auto;
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  background: var(--card-bg);
+  backdrop-filter: var(--panel-blur);
+  -webkit-backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  padding: 32px 26px;
+  box-shadow: var(--overlay-shadow);
 }
 
 .title {
-  font-size: 20px;
+  font-family: var(--font-display);
+  font-size: 21px;
   font-weight: 700;
-  color: #c2185b;
   margin: 0 0 20px;
   text-align: center;
+  color: var(--accent-strong);
 }
 
 .label {
   display: block;
   font-size: 13px;
-  color: #666;
+  font-weight: 600;
+  color: var(--text-secondary);
   margin-bottom: 14px;
 }
 
 .required {
-  color: #e91e63;
+  color: var(--accent);
   margin-left: 2px;
 }
 
@@ -48,19 +55,22 @@
   display: block;
   width: 100%;
   margin-top: 6px;
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
   font-size: 14px;
   font-family: inherit;
+  color: var(--text-primary);
+  background: var(--input-bg);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .input:focus,
 .select:focus,
 .textarea:focus {
-  border-color: #e91e63;
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .textarea {
@@ -68,7 +78,7 @@
 }
 
 .error {
-  color: #c62828;
+  color: var(--danger);
   font-size: 13px;
   margin: 0 0 12px;
 }
@@ -76,10 +86,10 @@
 /* 图片上传 */
 .uploadArea {
   margin-top: 6px;
-  padding: 12px;
-  border: 1px dashed #e0a5bd;
-  border-radius: 10px;
-  background: #fff5f8;
+  padding: 14px;
+  border: 1.5px dashed var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--accent-softer);
   text-align: center;
 }
 
@@ -102,24 +112,26 @@
 /* 「选择图片」按钮（label，点击触发隐藏的 file input） */
 .fileButton {
   display: inline-block;
-  padding: 8px 18px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #e91e63, #c2185b);
+  padding: 9px 20px;
+  border-radius: var(--radius-md);
+  background: var(--accent-grad);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s ease, box-shadow 0.2s;
+  box-shadow: 0 6px 16px var(--accent-soft);
 }
 
 .fileButton:hover {
-  opacity: 0.9;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .uploadHint {
   display: block;
   font-size: 12px;
-  color: #c2185b;
+  color: var(--accent-strong);
   margin-top: 6px;
 }
 
@@ -128,12 +140,12 @@
   max-width: 100%;
   max-height: 180px;
   margin-top: 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
 }
 
 .uploadError {
-  color: #c62828;
+  color: var(--danger);
   font-size: 12px;
   margin: 6px 0 0;
 }
@@ -142,7 +154,7 @@
   margin-top: 8px;
   border: none;
   background: none;
-  color: #c62828;
+  color: var(--danger);
   font-size: 12px;
   cursor: pointer;
   padding: 2px 4px;
@@ -161,31 +173,33 @@
 .cancel,
 .submit {
   flex: 1;
-  padding: 11px;
+  padding: 12px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s ease;
 }
 
 .cancel {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--btn-cancel-bg);
+  color: var(--btn-cancel-text);
 }
 
 .cancel:hover {
-  opacity: 0.85;
+  background: var(--btn-cancel-hover);
 }
 
 .submit {
-  background: linear-gradient(135deg, #e91e63, #c2185b);
+  background: var(--accent-grad);
   color: #fff;
+  box-shadow: 0 6px 16px var(--accent-soft);
 }
 
-.submit:hover {
-  opacity: 0.9;
+.submit:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .submit:disabled {

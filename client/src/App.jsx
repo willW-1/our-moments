@@ -7,7 +7,19 @@ import MemoryList from './components/MemoryList/MemoryList';
 import CountdownPanel from './components/CountdownPanel/CountdownPanel';
 import MessageBoard from './components/MessageBoard/MessageBoard';
 import WelcomeModal from './components/WelcomeModal/WelcomeModal';
+import ParticleField from './components/ParticleField/ParticleField';
+import ThemeToggle from './components/ThemeToggle/ThemeToggle';
+import { HeartLogo, ClockIcon, CameraIcon, ChatIcon, PlusIcon } from './components/icons';
 import { fetchMe, fetchMemories, deleteMemory } from './api';
+
+// 背景装饰层：渐变底 + 三层柔光斑（.bg 由 App.css 定义，z-index:-1 沉到内容之下）
+const appBg = (
+  <div className="bg" aria-hidden="true">
+    <span className="blob blob-1" />
+    <span className="blob blob-2" />
+    <span className="blob blob-3" />
+  </div>
+);
 
 // 页脚：技术栈小字 + 特别鸣谢大字（登录前后都显示在页面最下方）
 const appFooter = (
@@ -39,6 +51,18 @@ function App() {
   const [username, setUsername] = useState('');
   // 欢迎弹窗：登录校验成功后展示，需手动关闭
   const [showWelcome, setShowWelcome] = useState(false);
+  // 日夜主题：luxe=星河暗夜（默认），luxe-day=星河白昼；与 main.jsx 的初始逻辑一致
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('our-moments-theme');
+    return saved === 'luxe-day' ? 'luxe-day' : 'luxe';
+  });
+
+  const toggleTheme = () => {
+    const next = theme === 'luxe' ? 'luxe-day' : 'luxe';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('our-moments-theme', next);
+  };
 
   // 1) 启动时检查 localStorage 的 token，并用 /api/me 验证；无效则清除
   useEffect(() => {
@@ -127,7 +151,10 @@ function App() {
   if (authState === 'loggedOut') {
     return (
       <div className="app">
+        {appBg}
+        <ParticleField theme={theme} />
         <Login onLoginSuccess={handleLoggedIn} />
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
         {appFooter}
       </div>
     );
@@ -135,10 +162,13 @@ function App() {
 
   return (
     <div className="app">
+      {appBg}
+      <ParticleField theme={theme} />
+      <ThemeToggle theme={theme} onToggle={toggleTheme} />
       {/* 顶部整体（header + 手机端 Tab）吸顶：滚动时整块固定，避免 Tab 条被页头遮挡 */}
       <div className="app-top">
         <header className="app-header">
-          <span className="app-logo">💝</span>
+          <span className="app-logo"><HeartLogo size={26} /></span>
           <span className="app-title">Our Moments</span>
           <span className="app-nav">我们的故事</span>
           {authState === 'loggedIn' && (
@@ -152,21 +182,21 @@ function App() {
             className={`tab-btn ${mobileTab === 'countdown' ? 'active' : ''}`}
             onClick={() => setMobileTab('countdown')}
           >
-            ⏳ 倒计时
+            <ClockIcon size={16} /> 倒计时
           </button>
           <button
             type="button"
             className={`tab-btn ${mobileTab === 'memories' ? 'active' : ''}`}
             onClick={() => setMobileTab('memories')}
           >
-            📷 回忆
+            <CameraIcon size={16} /> 回忆
           </button>
           <button
             type="button"
             className={`tab-btn ${mobileTab === 'messages' ? 'active' : ''}`}
             onClick={() => setMobileTab('messages')}
           >
-            💬 留言板
+            <ChatIcon size={16} /> 留言板
           </button>
         </nav>
       </div>
@@ -193,7 +223,9 @@ function App() {
       )}
       {/* 旁观者不显示添加回忆的 ＋ 按钮 */}
       {authState === 'loggedIn' && !isViewer && (
-        <button className="fab" onClick={() => setShowAdd(true)} title="添加回忆">+</button>
+        <button className="fab" onClick={() => setShowAdd(true)} title="添加回忆">
+          <PlusIcon size={24} strokeWidth={2.2} />
+        </button>
       )}
       {authState === 'loggedIn' && showAdd && (
         <AddMemory

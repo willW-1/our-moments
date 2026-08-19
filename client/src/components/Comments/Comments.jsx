@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createComment, updateComment, deleteComment } from '../../api';
 import { formatRelativeTime } from '../../formatTime';
+import { UserIcon } from '../icons';
 import styles from './Comments.module.css';
 
 // 回忆卡片下的评论：支持一层回复（每条评论下有 replies 列表）
@@ -190,7 +191,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
         {comments.map((comment) => (
           <li key={comment.id} className={styles.item}>
             <div className={styles.meta}>
-              <span className={styles.author}>👤 {comment.author || '匿名'}</span>
+              <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {comment.author || '匿名'}</span>
               <span className={styles.time}>· {formatRelativeTime(comment.createdAt)}</span>
             </div>
 
@@ -273,7 +274,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                 {comment.replies.map((reply) => (
                   <li key={reply.id} className={styles.reply}>
                     <div className={styles.meta}>
-                      <span className={styles.author}>👤 {reply.author || '匿名'}</span>
+                      <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {reply.author || '匿名'}</span>
                       <span className={styles.time}>· {formatRelativeTime(reply.createdAt)}</span>
                     </div>
 

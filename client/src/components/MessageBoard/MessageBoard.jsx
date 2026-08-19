@@ -9,6 +9,7 @@ import {
   deleteMessageReply,
 } from '../../api';
 import { formatDateTime } from '../../formatTime';
+import { ChatIcon, UserIcon } from '../icons';
 import styles from './MessageBoard.module.css';
 
 // 留言板：每条留言显示内容 + 日期 + 作者，支持一层回复
@@ -186,7 +187,7 @@ function MessageBoard({ isViewer }) {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <span className={styles.title}>💬 留言板</span>
+        <span className={styles.title}><ChatIcon size={16} strokeWidth={1.8} /> 留言板</span>
       </div>
 
       <form className={styles.addForm} onSubmit={handleAdd}>
@@ -213,7 +214,7 @@ function MessageBoard({ isViewer }) {
         {messages.map((msg) => (
           <li key={msg.id} className={styles.item}>
             <div className={styles.meta}>
-              <span className={styles.author}>👤 {msg.author || '匿名'}</span>
+              <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {msg.author || '匿名'}</span>
               <span className={styles.time}>{formatDateTime(msg.createdAt)}</span>
             </div>
 
@@ -302,7 +303,7 @@ function MessageBoard({ isViewer }) {
                 {msg.replies.map((reply) => (
                   <li key={reply.id} className={styles.reply}>
                     <div className={styles.meta}>
-                      <span className={styles.author}>👤 {reply.author || '匿名'}</span>
+                      <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {reply.author || '匿名'}</span>
                       <span className={styles.time}>{formatDateTime(reply.createdAt)}</span>
                     </div>
 

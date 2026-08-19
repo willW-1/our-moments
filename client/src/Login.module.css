@@ -1,80 +1,104 @@
+/* 登录页：苹果官网式居中卡片 */
 .page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #fff0f5 0%, #fce4ec 30%, #fff5f5 70%, #fef9e7 100%);
-  padding: 20px;
+  padding: 24px;
+  /* 背景由 .bg 固定层提供，这里保持透明 */
 }
 
 .card {
   width: 100%;
-  max-width: 360px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 40px 32px;
-  box-shadow: 0 8px 32px rgba(233, 30, 99, 0.12);
+  max-width: 380px;
+  background: var(--card-bg);
+  backdrop-filter: var(--panel-blur);
+  -webkit-backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  padding: 48px 36px 36px;
+  box-shadow: var(--panel-shadow);
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .logo {
-  font-size: 40px;
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.25));
 }
 
 .title {
-  font-size: 22px;
+  font-family: var(--font-display);
+  font-size: 28px;
   font-weight: 700;
-  color: #c2185b;
-  margin: 0 0 4px;
+  letter-spacing: 0.5px;
+  margin: 0 0 6px;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: #999;
-  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 3px;
+  margin: 0 0 34px;
 }
 
 .input {
   width: 100%;
-  padding: 12px 14px;
-  margin-bottom: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
   font-size: 15px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--input-bg);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .input:focus {
-  border-color: #e91e63;
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 .error {
   width: 100%;
-  color: #c62828;
+  color: var(--danger);
   font-size: 13px;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   text-align: left;
 }
 
 .button {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #e91e63, #c2185b);
+  border-radius: var(--radius-md);
+  background: var(--accent-grad);
   color: #fff;
   font-size: 16px;
   font-weight: 600;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s ease, box-shadow 0.2s;
+  box-shadow: 0 10px 24px var(--accent-soft);
 }
 
-.button:hover {
-  opacity: 0.9;
+.button:hover:not(:disabled) {
+  opacity: 0.94;
+  transform: translateY(-1px);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .button:disabled {

@@ -3,30 +3,35 @@ import styles from './MemoryCard.module.css';
 import Comments from '../Comments/Comments';
 import { formatRelativeTime } from '../../formatTime';
 import { resolveImageUrl } from '../../api';
+import {
+  HeartIcon, PlaneIcon, GiftIcon, FilmIcon, TvIcon, TicketIcon, TagIcon,
+  ClockIcon, UserIcon, PinIcon, CloseIcon,
+} from '../icons';
 
+// 回忆类型图标（替代原 emoji，改用线性 SVG）
 const TYPE_ICONS = {
   // 英文键（兼容旧 mock 数据）
-  date: '💕',
-  travel: '✈️',
-  gift: '🎁',
-  movie: '🎬',
-  variety: '📺',
-  other: '📌',
+  date: HeartIcon,
+  travel: PlaneIcon,
+  gift: GiftIcon,
+  movie: FilmIcon,
+  variety: TvIcon,
+  other: TagIcon,
   // 中文键（数据库真实数据）
-  约会: '💕',
-  旅游: '✈️',
-  旅行: '✈️',
-  礼物: '🎁',
-  电影: '🎬',
-  综艺: '📺',
-  演唱会: '🎫',
-  演出: '🎫',
-  其他: '📌',
+  约会: HeartIcon,
+  旅游: PlaneIcon,
+  旅行: PlaneIcon,
+  礼物: GiftIcon,
+  电影: FilmIcon,
+  综艺: TvIcon,
+  演唱会: TicketIcon,
+  演出: TicketIcon,
+  其他: TagIcon,
 };
 
 function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
   const { type, title, date, location, description, imageUrl, author, createdAt, comments } = memory;
-  const icon = TYPE_ICONS[type] || TYPE_ICONS.other;
+  const TypeIcon = TYPE_ICONS[type] || TYPE_ICONS.other;
   // 点击图片放大（lightbox）：点遮罩或 ✕ 关闭
   const [zoomed, setZoomed] = useState(false);
 
@@ -72,16 +77,16 @@ function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
         </div>
       )}
       <div className={styles.inner}>
-        <div className={styles.iconArea}>{icon}</div>
+        <div className={styles.iconArea}>{TypeIcon && <TypeIcon size={26} strokeWidth={1.7} />}</div>
         <div className={styles.content}>
           <h3 className={styles.title}>{title}</h3>
           <p className={styles.date}>{formatDate(date)}</p>
-          <p className={styles.publishTime}>🕒 发布于 {formatRelativeTime(createdAt)}</p>
+          <p className={styles.publishTime}><ClockIcon size={12} strokeWidth={1.8} /> 发布于 {formatRelativeTime(createdAt)}</p>
           {author && (
-            <p className={styles.author}>👤 {author}</p>
+            <p className={styles.author}><UserIcon size={13} strokeWidth={1.8} /> {author}</p>
           )}
           {location && (
-            <p className={styles.location}>📍 {location}</p>
+            <p className={styles.location}><PinIcon size={13} strokeWidth={1.8} /> {location}</p>
           )}
           {description && (
             <p className={styles.description}>{description}</p>
@@ -111,7 +116,7 @@ function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
                 onClick={() => setZoomed(false)}
                 aria-label="关闭"
               >
-                ✕
+                <CloseIcon size={18} />
               </button>
             </div>
           )}

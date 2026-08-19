@@ -1,0 +1,359 @@
+/* ============================================================
+   主题设计系统（CSS 变量）
+   所有组件样式统一引用这里的 token，切换主题只需改
+   <html data-theme="...">，即换一套变量。
+   四套主题：glass（琉璃·玻璃拟态，默认）/ luxe（星河·暗夜奢华）
+             / cream（奶油·纸感柔雾）/ aurora（极光·渐变活力）
+   另加 luxe-day：星河的白昼对应版（日夜切换按钮用）
+   ============================================================ */
+
+:root,
+:root[data-theme='glass'] {
+  /* —— 形状 —— */
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  /* —— 页面背景（固定层 .bg 使用）—— */
+  --page-bg: linear-gradient(160deg, #fdeaf3 0%, #f4ecff 35%, #eaf2ff 70%, #eafbf3 100%);
+
+  /* —— 装饰光斑 —— */
+  --blob-1: #ff9ecb;
+  --blob-2: #b7a6ff;
+  --blob-3: #7fd6ff;
+  --blob-opacity: 0.5;
+
+  /* —— 顶栏 / Tab —— */
+  --header-bg: rgba(255, 255, 255, 0.55);
+  --header-border: rgba(255, 255, 255, 0.7);
+  --tab-bg: rgba(255, 255, 255, 0.72);
+
+  /* —— 面板 / 卡片 —— */
+  --panel-bg: rgba(255, 255, 255, 0.55);
+  --panel-border: rgba(255, 255, 255, 0.85);
+  --panel-blur: blur(18px) saturate(160%);
+  --panel-shadow: 0 8px 32px rgba(170, 90, 160, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --panel-radius: var(--radius-lg);
+  --card-bg: rgba(255, 255, 255, 0.62);
+  --card-shadow: 0 8px 28px rgba(160, 85, 160, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --card-hover-shadow: 0 16px 42px rgba(160, 85, 160, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --card-radius: 20px;
+  --icon-bg: rgba(255, 255, 255, 0.75);
+  --icon-radius: 14px;
+
+  /* —— 主色 —— */
+  --accent: #ec4899;
+  --accent-strong: #db2777;
+  --accent-grad: linear-gradient(135deg, #ff7eb6, #db2777);
+  --grad-a: #ff7eb6;
+  --grad-b: #db2777;
+  --accent-soft: rgba(236, 72, 153, 0.1);
+  --accent-softer: rgba(236, 72, 153, 0.06);
+  --accent-soft-grad: linear-gradient(135deg, rgba(255, 126, 182, 0.2), rgba(219, 39, 119, 0.1));
+
+  /* —— 文本 —— */
+  --text-primary: #3b3650;
+  --text-secondary: #5d5870;
+  --text-muted: #9992a8;
+  --text-faint: #b8b2c5;
+
+  /* —— 输入 —— */
+  --input-bg: rgba(255, 255, 255, 0.7);
+  --input-border: rgba(110, 100, 150, 0.2);
+  --input-focus-border: rgba(236, 72, 153, 0.6);
+
+  /* —— 分割线 —— */
+  --divider: rgba(110, 100, 150, 0.14);
+  --divider-soft: rgba(110, 100, 150, 0.1);
+
+  /* —— 危险色 / 链接 —— */
+  --danger: #e11d48;
+  --danger-soft: rgba(225, 29, 72, 0.08);
+  --link-color: #b8b2c5;
+
+  /* —— 取消按钮 —— */
+  --btn-cancel-bg: rgba(110, 100, 150, 0.1);
+  --btn-cancel-hover: rgba(110, 100, 150, 0.16);
+  --btn-cancel-text: #6b6480;
+
+  /* —— 遮罩 / 弹窗 / FAB —— */
+  --overlay: rgba(40, 30, 60, 0.45);
+  --overlay-shadow: 0 24px 80px rgba(30, 20, 50, 0.35);
+  --fab-shadow: 0 8px 24px rgba(236, 72, 153, 0.4);
+
+  /* —— 字体 —— */
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* —— 粒子层颜色（星空粒子跟随鼠标，随主题变色） —— */
+  --particle-color: rgba(255, 255, 255, 0.8);
+}
+
+/* ============ 星河 · 暗夜奢华 ============ */
+:root[data-theme='luxe'] {
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --page-bg: radial-gradient(1200px 820px at 82% -12%, rgba(168, 85, 247, 0.3), transparent 62%),
+    radial-gradient(1000px 760px at 8% 112%, rgba(240, 179, 92, 0.18), transparent 58%),
+    linear-gradient(165deg, #0a0818 0%, #171132 46%, #0c1633 100%);
+
+  --blob-1: #a855f7;
+  --blob-2: #ec4899;
+  --blob-3: #f0b35c;
+  --blob-opacity: 0.32;
+
+  --header-bg: rgba(18, 14, 36, 0.55);
+  --header-border: rgba(255, 255, 255, 0.08);
+  --tab-bg: rgba(18, 14, 36, 0.72);
+
+  --panel-bg: rgba(255, 255, 255, 0.055);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --panel-blur: blur(18px);
+  --panel-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --panel-radius: var(--radius-lg);
+  --card-bg: rgba(255, 255, 255, 0.09);
+  --card-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --card-hover-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --card-radius: 20px;
+  --icon-bg: rgba(255, 255, 255, 0.08);
+  --icon-radius: 14px;
+
+  --accent: #f9a8d4;
+  --accent-strong: #eab861;
+  --accent-grad: linear-gradient(135deg, #f0b35c, #e879f9);
+  --grad-a: #f0b35c;
+  --grad-b: #e879f9;
+  --accent-soft: rgba(240, 179, 92, 0.14);
+  --accent-softer: rgba(240, 179, 92, 0.07);
+  --accent-soft-grad: linear-gradient(135deg, rgba(240, 179, 92, 0.16), rgba(232, 121, 249, 0.1));
+
+  --text-primary: #f4f1fb;
+  --text-secondary: #c7c2d6;
+  --text-muted: #8b87a0;
+  --text-faint: #6c6880;
+
+  --input-bg: rgba(255, 255, 255, 0.06);
+  --input-border: rgba(255, 255, 255, 0.14);
+  --input-focus-border: rgba(240, 179, 92, 0.6);
+
+  --divider: rgba(255, 255, 255, 0.1);
+  --divider-soft: rgba(255, 255, 255, 0.07);
+
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.12);
+  --link-color: #8b87a0;
+
+  --btn-cancel-bg: rgba(255, 255, 255, 0.08);
+  --btn-cancel-hover: rgba(255, 255, 255, 0.14);
+  --btn-cancel-text: #c7c2d6;
+
+  --overlay: rgba(4, 4, 14, 0.62);
+  --overlay-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  --fab-shadow: 0 8px 24px rgba(240, 179, 92, 0.35);
+
+  --font-display: 'Playfair Display', 'Noto Serif SC', 'Inter', serif;
+
+  /* —— 粒子层颜色：夜空里的白色星光 —— */
+  --particle-color: rgba(255, 255, 255, 0.9);
+}
+
+/* ============ 奶油 · 纸感柔雾 ============ */
+:root[data-theme='cream'] {
+  --radius-lg: 26px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+
+  --page-bg: linear-gradient(180deg, #f7f2ec 0%, #f1e9e0 100%);
+
+  --blob-1: #e8c7ad;
+  --blob-2: #f2d5cf;
+  --blob-3: #e2d3e8;
+  --blob-opacity: 0.55;
+
+  --header-bg: rgba(247, 242, 236, 0.6);
+  --header-border: rgba(120, 100, 80, 0.1);
+  --tab-bg: rgba(247, 242, 236, 0.85);
+
+  --panel-bg: #f4eee6;
+  --panel-border: transparent;
+  --panel-blur: none;
+  --panel-shadow: -10px -10px 24px rgba(255, 255, 255, 0.7), 10px 10px 24px rgba(120, 100, 80, 0.1);
+  --panel-radius: var(--radius-lg);
+  --card-bg: #f4eee6;
+  --card-shadow: -10px -10px 24px rgba(255, 255, 255, 0.7), 10px 10px 24px rgba(120, 100, 80, 0.1);
+  --card-hover-shadow: -6px -6px 16px rgba(255, 255, 255, 0.85), 6px 6px 22px rgba(120, 100, 80, 0.16);
+  --card-radius: 24px;
+  --icon-bg: #ece3d7;
+  --icon-radius: 16px;
+
+  --accent: #d97757;
+  --accent-strong: #c05c3e;
+  --accent-grad: linear-gradient(135deg, #e08a6a, #c05c3e);
+  --grad-a: #e08a6a;
+  --grad-b: #c05c3e;
+  --accent-soft: rgba(217, 119, 87, 0.12);
+  --accent-softer: rgba(217, 119, 87, 0.07);
+  --accent-soft-grad: linear-gradient(135deg, rgba(224, 138, 106, 0.2), rgba(192, 92, 62, 0.1));
+
+  --text-primary: #4a4238;
+  --text-secondary: #6f675c;
+  --text-muted: #a39888;
+  --text-faint: #c0b7a8;
+
+  --input-bg: #faf6f0;
+  --input-border: rgba(120, 100, 80, 0.14);
+  --input-focus-border: rgba(192, 92, 62, 0.5);
+
+  --divider: rgba(120, 100, 80, 0.14);
+  --divider-soft: rgba(120, 100, 80, 0.1);
+
+  --danger: #c0392b;
+  --danger-soft: rgba(192, 57, 43, 0.08);
+  --link-color: #a39888;
+
+  --btn-cancel-bg: rgba(120, 100, 80, 0.1);
+  --btn-cancel-hover: rgba(120, 100, 80, 0.16);
+  --btn-cancel-text: #7a7266;
+
+  --overlay: rgba(80, 60, 40, 0.4);
+  --overlay-shadow: 0 16px 48px rgba(60, 45, 30, 0.28);
+  --fab-shadow: 0 8px 20px rgba(192, 92, 62, 0.35);
+
+  --font-display: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* ============ 极光 · 渐变活力 ============ */
+:root[data-theme='aurora'] {
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --page-bg: linear-gradient(135deg, #ff9a9e 0%, #fecfef 32%, #a18cd1 68%, #fbc2eb 100%);
+
+  --blob-1: #ffd7e9;
+  --blob-2: #cdc7ff;
+  --blob-3: #ffd3a5;
+  --blob-opacity: 0.35;
+
+  --header-bg: rgba(255, 255, 255, 0.55);
+  --header-border: rgba(255, 255, 255, 0.75);
+  --tab-bg: rgba(255, 255, 255, 0.72);
+
+  --panel-bg: rgba(255, 255, 255, 0.72);
+  --panel-border: rgba(255, 255, 255, 0.9);
+  --panel-blur: blur(14px);
+  --panel-shadow: 0 12px 40px rgba(120, 60, 140, 0.22);
+  --panel-radius: var(--radius-lg);
+  --card-bg: rgba(255, 255, 255, 0.86);
+  --card-shadow: 0 12px 36px rgba(120, 60, 140, 0.18);
+  --card-hover-shadow: 0 18px 52px rgba(120, 60, 140, 0.28), 0 0 0 3px rgba(255, 255, 255, 0.5);
+  --card-radius: 20px;
+  --icon-bg: #fff0f6;
+  --icon-radius: 14px;
+
+  --accent: #e0238a;
+  --accent-strong: #c2186b;
+  --accent-grad: linear-gradient(135deg, #ff5e9c, #8e2de2);
+  --grad-a: #ff5e9c;
+  --grad-b: #8e2de2;
+  --accent-soft: rgba(224, 35, 138, 0.1);
+  --accent-softer: rgba(224, 35, 138, 0.06);
+  --accent-soft-grad: linear-gradient(135deg, rgba(255, 94, 156, 0.18), rgba(142, 45, 226, 0.1));
+
+  --text-primary: #2d2440;
+  --text-secondary: #5b5470;
+  --text-muted: #8f88a0;
+  --text-faint: #b3adc0;
+
+  --input-bg: rgba(255, 255, 255, 0.8);
+  --input-border: rgba(150, 110, 180, 0.2);
+  --input-focus-border: rgba(224, 35, 138, 0.55);
+
+  --divider: rgba(150, 110, 180, 0.16);
+  --divider-soft: rgba(150, 110, 180, 0.1);
+
+  --danger: #e11d48;
+  --danger-soft: rgba(225, 29, 72, 0.08);
+  --link-color: #a79fb8;
+
+  --btn-cancel-bg: rgba(150, 110, 180, 0.1);
+  --btn-cancel-hover: rgba(150, 110, 180, 0.16);
+  --btn-cancel-text: #6b6480;
+
+  --overlay: rgba(60, 30, 70, 0.5);
+  --overlay-shadow: 0 24px 80px rgba(40, 10, 50, 0.35);
+  --fab-shadow: 0 8px 24px rgba(224, 35, 138, 0.4);
+
+  --font-display: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* ============ 星河 · 白昼（与暗夜对应的白天模式） ============ */
+:root[data-theme='luxe-day'] {
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --page-bg: radial-gradient(1100px 780px at 85% -8%, rgba(217, 70, 239, 0.15), transparent 60%),
+    radial-gradient(1000px 720px at 6% 110%, rgba(232, 161, 58, 0.13), transparent 58%),
+    linear-gradient(165deg, #fbf8ff 0%, #f3ecfb 46%, #f2f6ff 100%);
+
+  --blob-1: #c4a5f7;
+  --blob-2: #f3b7d8;
+  --blob-3: #f7d9a8;
+  --blob-opacity: 0.4;
+
+  --header-bg: rgba(255, 255, 255, 0.62);
+  --header-border: rgba(120, 90, 180, 0.1);
+  --tab-bg: rgba(255, 255, 255, 0.8);
+
+  --panel-bg: rgba(255, 255, 255, 0.72);
+  --panel-border: rgba(255, 255, 255, 0.9);
+  --panel-blur: blur(18px) saturate(160%);
+  --panel-shadow: 0 16px 44px rgba(110, 70, 180, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --panel-radius: var(--radius-lg);
+  --card-bg: rgba(255, 255, 255, 0.82);
+  --card-shadow: 0 10px 30px rgba(110, 70, 180, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --card-hover-shadow: 0 20px 48px rgba(110, 70, 180, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --card-radius: 20px;
+  --icon-bg: rgba(255, 255, 255, 0.85);
+  --icon-radius: 14px;
+
+  --accent: #bd4a8f;
+  --accent-strong: #a23b78;
+  --accent-grad: linear-gradient(135deg, #e8a13a, #d946ef);
+  --grad-a: #e8a13a;
+  --grad-b: #d946ef;
+  --accent-soft: rgba(189, 74, 143, 0.1);
+  --accent-softer: rgba(189, 74, 143, 0.06);
+  --accent-soft-grad: linear-gradient(135deg, rgba(232, 161, 58, 0.16), rgba(217, 70, 239, 0.1));
+
+  --text-primary: #2e2b40;
+  --text-secondary: #4f4a63;
+  --text-muted: #8a849b;
+  --text-faint: #b1abc0;
+
+  --input-bg: rgba(255, 255, 255, 0.85);
+  --input-border: rgba(110, 70, 180, 0.18);
+  --input-focus-border: rgba(217, 70, 239, 0.55);
+
+  --divider: rgba(110, 70, 180, 0.14);
+  --divider-soft: rgba(110, 70, 180, 0.1);
+
+  --danger: #e11d48;
+  --danger-soft: rgba(225, 29, 72, 0.08);
+  --link-color: #a49dc0;
+
+  --btn-cancel-bg: rgba(110, 70, 180, 0.1);
+  --btn-cancel-hover: rgba(110, 70, 180, 0.16);
+  --btn-cancel-text: #6b6480;
+
+  --overlay: rgba(60, 40, 90, 0.45);
+  --overlay-shadow: 0 24px 80px rgba(40, 20, 70, 0.3);
+  --fab-shadow: 0 8px 24px rgba(217, 70, 239, 0.35);
+
+  --font-display: 'Playfair Display', 'Noto Serif SC', 'Inter', serif;
+
+  /* —— 粒子层颜色：白昼下的金色浮尘 —— */
+  --particle-color: rgba(232, 161, 58, 0.45);
+}

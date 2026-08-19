@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import styles from './WelcomeModal.module.css';
 import { formatDateTime } from '../../formatTime';
+import { HeartLogo, CloseIcon } from '../icons';
 
 // GitHub 仓库公开地址，直接调 API 拉取最近提交（最新更新时间 + 更新内容）
 const GITHUB_COMMITS_URL = 'https://api.github.com/repos/willW-1/our-moments/commits?per_page=4';
@@ -42,10 +43,10 @@ function WelcomeModal({ username, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="关闭">
-          ✕
+          <CloseIcon size={14} strokeWidth={2} />
         </button>
 
-        <div className={styles.emoji}>💝</div>
+        <div className={styles.emoji}><HeartLogo size={52} /></div>
         <h2 className={styles.title}>
           欢迎回来{username ? `，${username}` : ''}
         </h2>

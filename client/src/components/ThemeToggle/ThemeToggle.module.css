@@ -1,0 +1,29 @@
+/* 左下角日夜模式切换按钮（玻璃圆形） */
+.toggle {
+  position: fixed;
+  left: 22px;
+  bottom: 22px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  background: var(--card-bg);
+  backdrop-filter: var(--panel-blur);
+  -webkit-backdrop-filter: var(--panel-blur);
+  box-shadow: var(--panel-shadow);
+  color: var(--accent-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 150;
+  transition: transform 0.2s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.toggle:hover {
+  transform: scale(1.08);
+}
+
+.toggle:active {
+  transform: scale(0.96);
+}

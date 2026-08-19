@@ -8,11 +8,11 @@
   font-size: 24px;
   font-weight: 700;
   margin: 0 0 8px;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .subtitle {
   font-size: 14px;
-  color: #999;
+  color: var(--text-muted);
   margin: 0 0 24px;
 }

@@ -2,7 +2,9 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--overlay);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,10 +18,13 @@
   max-width: 420px;
   max-height: 80vh;
   overflow-y: auto;
-  background: #fff;
-  border-radius: 18px;
-  padding: 36px 28px 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  background: var(--card-bg);
+  backdrop-filter: var(--panel-blur);
+  -webkit-backdrop-filter: var(--panel-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  padding: 40px 28px 24px;
+  box-shadow: var(--overlay-shadow);
   text-align: center;
 }
 
@@ -27,50 +32,59 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border: none;
   border-radius: 50%;
-  background: #f5f5f5;
-  color: #999;
-  font-size: 14px;
-  line-height: 1;
+  background: var(--btn-cancel-bg);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: color 0.2s, background 0.2s;
 }
 
 .closeBtn:hover {
-  color: #c2185b;
-  background: #fce4ec;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
 .emoji {
-  font-size: 44px;
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.3));
 }
 
 .title {
-  font-size: 22px;
+  font-family: var(--font-display);
+  font-size: 23px;
   font-weight: 700;
-  color: #c2185b;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .subtitle {
-  font-size: 13px;
-  color: #999;
-  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 3px;
+  margin: 0 0 18px;
 }
 
 .status {
   font-size: 14px;
-  color: #999;
+  color: var(--text-muted);
   margin: 0 0 16px;
   padding: 12px 0;
 }
 
 .error {
-  color: #c62828;
+  color: var(--danger);
 }
 
 /* 更新列表 */
@@ -82,9 +96,9 @@
 }
 
 .item {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #fff5f8;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--accent-softer);
   margin-bottom: 8px;
 }
 
@@ -94,30 +108,32 @@
 
 .time {
   font-size: 12px;
-  color: #e91e63;
+  color: var(--accent);
   margin-bottom: 4px;
 }
 
 .msg {
   font-size: 13px;
-  color: #444;
-  line-height: 1.5;
+  color: var(--text-secondary);
+  line-height: 1.6;
   word-break: break-word;
 }
 
 .doneBtn {
   width: 100%;
-  padding: 12px;
+  padding: 13px;
   border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #e91e63, #c2185b);
+  border-radius: var(--radius-md);
+  background: var(--accent-grad);
   color: #fff;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s ease;
+  box-shadow: 0 8px 20px var(--accent-soft);
 }
 
 .doneBtn:hover {
-  opacity: 0.9;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }

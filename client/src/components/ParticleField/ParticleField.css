@@ -1,0 +1,14 @@
+/* 粒子层：固定在视口，与 .bg 同层（z-index:-1），DOM 顺序在其后所以画在其上、内容之下 */
+.particle-field {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* 手机端无鼠标：不渲染粒子，静态星空由 CSS 星点承担 */
+@media (hover: none), (pointer: coarse) {
+  .particle-field {
+    display: none;
+  }
+}
