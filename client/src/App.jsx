@@ -7,7 +7,6 @@ import MemoryList from './components/MemoryList/MemoryList';
 import CountdownPanel from './components/CountdownPanel/CountdownPanel';
 import MessageBoard from './components/MessageBoard/MessageBoard';
 import WelcomeModal from './components/WelcomeModal/WelcomeModal';
-import LetterModal from './components/LetterModal/LetterModal';
 import ParticleField from './components/ParticleField/ParticleField';
 import ThemeToggle from './components/ThemeToggle/ThemeToggle';
 import { HeartLogo, ClockIcon, CameraIcon, ChatIcon, PlusIcon } from './components/icons';
@@ -29,7 +28,7 @@ const appFooter = (
       本页面使用 Claude + DeepSeek vibe coding 而成 · 前端挂载于腾讯 EdgeOne Pages · 数据库由 Aiven
       支持 · 后端挂载于 Render · 上传的图片存储于 Filebase
     </p>
-    <p className="footer-thanks">特别鸣谢 @Cynosure @冰的热美式</p>
+    <p className="footer-thanks">本网站由 Will Wang 开发</p>
   </footer>
 );
 
@@ -52,8 +51,6 @@ function App() {
   const [username, setUsername] = useState('');
   // 欢迎弹窗：登录校验成功后展示，需手动关闭
   const [showWelcome, setShowWelcome] = useState(false);
-  // 生日信弹窗：wyc 登录时先展示（在更新内容弹窗之前），需手动关闭
-  const [showLetter, setShowLetter] = useState(false);
   // 日夜主题：luxe=星河暗夜（默认），luxe-day=星河白昼；与 main.jsx 的初始逻辑一致
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('our-moments-theme');
@@ -81,12 +78,7 @@ function App() {
           if (me && me.role) setRole(me.role);
           if (me && me.username) setUsername(me.username);
           setAuthState('loggedIn');
-          // wyc 先看生日信，关闭后再展示更新内容弹窗；其他用户直接展示更新弹窗
-          if (me && me.username === 'wyc') {
-            setShowLetter(true);
-          } else {
-            setShowWelcome(true);
-          }
+          setShowWelcome(true);
         }
       })
       .catch(() => {
@@ -177,8 +169,8 @@ function App() {
       <div className="app-top">
         <header className="app-header">
           <span className="app-logo"><HeartLogo size={26} /></span>
-          <span className="app-title">Our Moments</span>
-          <span className="app-nav">我们的故事</span>
+          <span className="app-title">Memories</span>
+          <span className="app-nav">回忆</span>
           {authState === 'loggedIn' && (
             <span className="app-logout" onClick={handleLogout}>退出</span>
           )}
@@ -251,15 +243,6 @@ function App() {
           onUpdated={() => {
             setEditingMemory(null);
             setRefreshKey((k) => k + 1); // 刷新记忆列表
-          }}
-        />
-      )}
-      {/* 生日信弹窗：wyc 登录时先展示；关闭后才轮到更新内容弹窗 */}
-      {authState === 'loggedIn' && showLetter && (
-        <LetterModal
-          onClose={() => {
-            setShowLetter(false);
-            setShowWelcome(true);
           }}
         />
       )}

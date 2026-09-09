@@ -28,8 +28,8 @@ function Login({ onLoginSuccess }) {
     <div className={styles.page}>
       <form className={styles.card} onSubmit={handleSubmit}>
         <div className={styles.logo}><HeartLogo size={56} /></div>
-        <h1 className={styles.title}>Our Moments</h1>
-        <p className={styles.subtitle}>我们的故事</p>
+        <h1 className={styles.title}>Memories</h1>
+        <p className={styles.subtitle}>回忆</p>
         <input
           className={styles.input}
           type="text"

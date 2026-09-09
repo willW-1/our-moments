@@ -256,7 +256,7 @@ body {
   border-color: var(--danger-soft);
 }
 
-/* ===== 窄屏（手机）：压缩 Header 间距字号，保证 logo 与「我们的故事」不互相遮挡 ===== */
+/* ===== 窄屏（手机）：压缩 Header 间距字号，保证 logo 与导航不互相遮挡 ===== */
 @media (max-width: 768px) {
   .app-header {
     padding: 12px 16px;
@@ -430,8 +430,8 @@ body {
 
 .footer-thanks {
   margin-top: 10px;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--accent-strong);
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
