@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { fetchCountdowns, createCountdown, updateCountdown, deleteCountdown } from '../../api';
 import { ClockIcon, PlusIcon } from '../icons';
 import Reveal from '../Reveal/Reveal';
@@ -173,45 +174,49 @@ function CountdownPanel({ isViewer }) {
         })}
       </ul>
 
-      {showModal && (
-        <div className={styles.overlay} onClick={closeModal}>
-          <form
-            className={styles.modal}
-            onSubmit={handleSubmit}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className={styles.modalTitle}>{editing ? '编辑倒计时' : '添加倒计时'}</h3>
-            <label className={styles.label}>
-              主题名
-              <input
-                className={styles.input}
-                type="text"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="如：纪念日 / 生日"
-              />
-            </label>
-            <label className={styles.label}>
-              目标日期
-              <input
-                className={styles.input}
-                type="date"
-                value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
-              />
-            </label>
-            {formError && <p className={styles.error}>{formError}</p>}
-            <div className={styles.modalActions}>
-              <button type="button" className={styles.cancel} onClick={closeModal}>
-                取消
-              </button>
-              <button type="submit" className={styles.save} disabled={submitting}>
-                {submitting ? '保存中…' : '保存'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {showModal &&
+        createPortal(
+          // 用 Portal 挂到 body：面板带 backdrop-filter 会变成 fixed 的包含块，
+          // 直接渲染会把弹窗锁进左侧小面板；挂到 body 后才是真正的全屏居中遮罩弹窗
+          <div className={styles.overlay} onClick={closeModal}>
+            <form
+              className={styles.modal}
+              onSubmit={handleSubmit}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className={styles.modalTitle}>{editing ? '编辑倒计时' : '添加倒计时'}</h3>
+              <label className={styles.label}>
+                主题名
+                <input
+                  className={styles.input}
+                  type="text"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="如：纪念日 / 生日"
+                />
+              </label>
+              <label className={styles.label}>
+                目标日期
+                <input
+                  className={styles.input}
+                  type="date"
+                  value={formDate}
+                  onChange={(e) => setFormDate(e.target.value)}
+                />
+              </label>
+              {formError && <p className={styles.error}>{formError}</p>}
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancel} onClick={closeModal}>
+                  取消
+                </button>
+                <button type="submit" className={styles.save} disabled={submitting}>
+                  {submitting ? '保存中…' : '保存'}
+                </button>
+              </div>
+            </form>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -11,6 +11,8 @@
 :root[data-theme='glass'] {
   /* —— 形状 —— */
   --radius-lg: 22px;
+  /* 原生控件跟随浅色 */
+  color-scheme: light;
   --radius-md: 14px;
   --radius-sm: 10px;
 
@@ -90,6 +92,8 @@
 
 /* ============ 星河 · 暗夜奢华 ============ */
 :root[data-theme='luxe'] {
+  /* 原生控件（下拉框选项弹层 / 日期选择器）跟随暗色，弹层不再白底浅字看不清 */
+  color-scheme: dark;
   --radius-lg: 22px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -151,6 +155,7 @@
   --overlay: rgba(4, 4, 14, 0.62);
   --overlay-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
   --fab-shadow: 0 8px 24px rgba(240, 179, 92, 0.35);
+  --menu-bg: rgba(24, 20, 44, 0.96); /* 下拉菜单等浮层：近不透明白底深字，避免透出下层内容 */
 
   --font-display: 'Playfair Display', 'Noto Serif SC', 'Inter', serif;
 
@@ -290,6 +295,8 @@
 
 /* ============ 星河 · 白昼（与暗夜对应的白天模式） ============ */
 :root[data-theme='luxe-day'] {
+  /* 原生控件（下拉框选项弹层 / 日期选择器）跟随浅色 */
+  color-scheme: light;
   --radius-lg: 22px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -351,6 +358,7 @@
   --overlay: rgba(60, 40, 90, 0.45);
   --overlay-shadow: 0 24px 80px rgba(40, 20, 70, 0.3);
   --fab-shadow: 0 8px 24px rgba(217, 70, 239, 0.35);
+  --menu-bg: rgba(255, 255, 255, 0.96); /* 下拉菜单等浮层：近不透明白底深字 */
 
   --font-display: 'Playfair Display', 'Noto Serif SC', 'Inter', serif;
 

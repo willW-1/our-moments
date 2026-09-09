@@ -5,7 +5,7 @@ import useRevealOnScroll from '../../useRevealOnScroll';
 import { formatRelativeTime } from '../../formatTime';
 import { resolveImageUrl } from '../../api';
 import {
-  HeartIcon, PlaneIcon, GiftIcon, FilmIcon, TvIcon, TicketIcon, TagIcon,
+  HeartIcon, PlaneIcon, GiftIcon, FilmIcon, GraduationIcon, TvIcon, TicketIcon, TagIcon,
   ClockIcon, UserIcon, PinIcon, CloseIcon,
 } from '../icons';
 
@@ -19,7 +19,7 @@ const TYPE_ICONS = {
   variety: TvIcon,
   other: TagIcon,
   // 中文键（数据库真实数据）
-  约会: HeartIcon,
+  学习: GraduationIcon,
   旅游: PlaneIcon,
   旅行: PlaneIcon,
   礼物: GiftIcon,

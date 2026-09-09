@@ -1,16 +1,20 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { uploadImage, resolveImageUrl } from './api';
+import { ChevronDownIcon } from './components/icons';
 import styles from './MemoryForm.module.css';
 
 // 与 MemoryCard 的 TYPE_ICONS 中文 key 保持一致
-const TYPE_OPTIONS = ['约会', '旅游', '旅行', '电影', '演唱会', '演出', '礼物', '综艺', '其他'];
+const TYPE_OPTIONS = ['学习', '旅行', '电影', '演唱会', '演出', '礼物', '综艺', '其他'];
 
 // 添加 / 编辑共用的表单弹窗
 // initial 为 null 表示新建；传 memory 对象则预填（编辑模式）
 // onSubmit(payload) 应返回 Promise，resolve 后自动关闭弹窗
 function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
   const fileInputId = useId();
-  const [type, setType] = useState(initial?.type || '约会');
+  const typeWrapRef = useRef(null);
+  // 自定义类型下拉：点外部 / Esc 关闭
+  const [typeOpen, setTypeOpen] = useState(false);
+  const [type, setType] = useState(initial?.type || '学习');
   const [title, setTitle] = useState(initial?.title || '');
   const [date, setDate] = useState(initial?.date ? initial.date.slice(0, 10) : '');
   const [location, setLocation] = useState(initial?.location || '');
@@ -20,6 +24,23 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
   const [imageKey, setImageKey] = useState(initial?.imageKey || '');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // 类型下拉打开时：点下拉外关闭，按 Esc 关闭
+  useEffect(() => {
+    if (!typeOpen) return;
+    const onPointerDown = (e) => {
+      if (typeWrapRef.current && !typeWrapRef.current.contains(e.target)) setTypeOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setTypeOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [typeOpen]);
+
   // 图片上传
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -95,20 +116,38 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
       >
         <h2 className={styles.title}>{heading}</h2>
 
-        <label className={styles.label}>
+        {/* 自定义类型下拉：原生 <select> 的选项弹层是系统白底，深色主题下看不清；改用主题化的自定义菜单 */}
+        <div className={`${styles.label} ${styles.typeField}`} ref={typeWrapRef}>
           类型
-          <select
-            className={styles.select}
-            value={type}
-            onChange={(e) => setType(e.target.value)}
+          <button
+            type="button"
+            className={`${styles.select} ${styles.typeBtn}`}
+            aria-haspopup="listbox"
+            aria-expanded={typeOpen}
+            onClick={() => setTypeOpen((o) => !o)}
           >
-            {TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+            <span>{type}</span>
+            <ChevronDownIcon size={16} strokeWidth={2} />
+          </button>
+          {typeOpen && (
+            <ul className={styles.typeMenu} role="listbox">
+              {TYPE_OPTIONS.map((t) => (
+                <li key={t} role="option" aria-selected={type === t}>
+                  <button
+                    type="button"
+                    className={`${styles.typeOption} ${type === t ? styles.typeOptionActive : ''}`}
+                    onClick={() => {
+                      setType(t);
+                      setTypeOpen(false);
+                    }}
+                  >
+                    {t}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <label className={styles.label}>
           标题 <span className={styles.required}>*</span>

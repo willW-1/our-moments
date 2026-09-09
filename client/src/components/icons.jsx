@@ -145,6 +145,15 @@ export function CheckIcon(props) {
   );
 }
 
+export function ChevronDownIcon(props) {
+  const { size = 20, strokeWidth = 1.6, ...rest } = props;
+  return (
+    <svg {...svgProps(size, strokeWidth, rest)}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 /* 回忆类型图标（替代原 emoji） */
 export function PlaneIcon(props) {
   const { size = 20, strokeWidth = 1.6, ...rest } = props;
@@ -164,6 +173,17 @@ export function GiftIcon(props) {
       <path d="M12 8v13" />
       <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
       <path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" />
+    </svg>
+  );
+}
+
+export function GraduationIcon(props) {
+  const { size = 20, strokeWidth = 1.6, ...rest } = props;
+  return (
+    <svg {...svgProps(size, strokeWidth, rest)}>
+      <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0Z" />
+      <path d="M22 10v6" />
+      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
     </svg>
   );
 }

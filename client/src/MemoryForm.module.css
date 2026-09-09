@@ -77,6 +77,86 @@
   resize: vertical;
 }
 
+/* ===== 类型自定义下拉（替代原生 <select>，避免系统白底选项弹层） ===== */
+.typeField {
+  position: relative;
+}
+
+.typeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.typeBtn svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.typeBtn[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.typeMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 236px;
+  overflow-y: auto;
+  background: var(--menu-bg, var(--card-bg));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--overlay-shadow);
+  animation: menuIn 0.16s ease backwards;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.typeOption {
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.typeOption:hover {
+  background: var(--accent-softer);
+  color: var(--text-primary);
+}
+
+.typeOptionActive,
+.typeOptionActive:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
 .error {
   color: var(--danger);
   font-size: 13px;
