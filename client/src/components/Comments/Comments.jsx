@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { createComment, updateComment, deleteComment } from '../../api';
 import { formatRelativeTime } from '../../formatTime';
 import { UserIcon } from '../icons';
+import { t, useT } from '../../i18n';
 import styles from './Comments.module.css';
 
 // 回忆卡片下的评论：支持一层回复（每条评论下有 replies 列表）
 function Comments({ memoryId, comments: initialComments, isViewer }) {
+  useT(); // 订阅语言（评论内容本身是用户写的，不翻译）
   const [comments, setComments] = useState(initialComments || []);
   const [draft, setDraft] = useState(''); // 新顶层评论输入
   const [error, setError] = useState('');
@@ -38,7 +40,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
       setComments((prev) => [...prev, { ...created, replies: [] }]);
       setDraft('');
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '评论失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('comment.errCreate'));
     } finally {
       setSubmitting(false);
     }
@@ -69,7 +71,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
       setReplyingTo(null);
       setReplyDraft('');
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '回复失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('comment.errReply'));
     } finally {
       setReplySubmitting(false);
     }
@@ -97,7 +99,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
       setEditingId(null);
       setEditContent('');
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '保存失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('comment.errSave'));
     } finally {
       setSubmitting(false);
     }
@@ -134,24 +136,24 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
       setEditingReplyId(null);
       setEditReplyContent('');
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '保存失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('comment.errSave'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (comment) => {
-    if (!window.confirm('确定删除这条评论吗？其下回复会一并删除。')) return;
+    if (!window.confirm(t('comment.confirmDelete'))) return;
     try {
       await deleteComment(getToken(), comment.id);
       setComments((prev) => prev.filter((c) => c.id !== comment.id));
     } catch (err) {
-      alert(err.message || '删除失败');
+      alert(err.message || t('comment.errDelete'));
     }
   };
 
   const handleDeleteReply = async (comment, reply) => {
-    if (!window.confirm('确定删除这条回复吗？')) return;
+    if (!window.confirm(t('comment.confirmReplyDelete'))) return;
     try {
       await deleteComment(getToken(), reply.id);
       setComments((prev) =>
@@ -162,7 +164,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
         )
       );
     } catch (err) {
-      alert(err.message || '删除失败');
+      alert(err.message || t('comment.errDelete'));
     }
   };
 
@@ -176,11 +178,11 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="写下你的评论…"
+            placeholder={t('comment.placeholder')}
             disabled={submitting}
           />
           <button className={styles.submit} type="submit" disabled={submitting || !draft.trim()}>
-            评论
+            {t('comment.submit')}
           </button>
         </form>
       )}
@@ -191,7 +193,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
         {comments.map((comment) => (
           <li key={comment.id} className={styles.item}>
             <div className={styles.meta}>
-              <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {comment.author || '匿名'}</span>
+              <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {comment.author || t('common.anonymous')}</span>
               <span className={styles.time}>· {formatRelativeTime(comment.createdAt)}</span>
             </div>
 
@@ -205,7 +207,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                 />
                 <div className={styles.editActions}>
                   <button type="button" className={styles.cancel} onClick={cancelEdit}>
-                    取消
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="button"
@@ -213,7 +215,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                     onClick={() => handleSaveEdit(comment)}
                     disabled={submitting || !editContent.trim()}
                   >
-                    保存
+                    {t('common.save')}
                   </button>
                 </div>
               </div>
@@ -224,17 +226,17 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
             {editingId !== comment.id && !isViewer && (
               <div className={styles.itemActions}>
                 <button type="button" className={styles.linkBtn} onClick={() => startReply(comment)}>
-                  回复
+                  {t('common.reply')}
                 </button>
                 <button type="button" className={styles.linkBtn} onClick={() => startEdit(comment)}>
-                  编辑
+                  {t('common.edit')}
                 </button>
                 <button
                   type="button"
                   className={`${styles.linkBtn} ${styles.danger}`}
                   onClick={() => handleDelete(comment)}
                 >
-                  删除
+                  {t('common.delete')}
                 </button>
               </div>
             )}
@@ -252,7 +254,9 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                   type="text"
                   value={replyDraft}
                   onChange={(e) => setReplyDraft(e.target.value)}
-                  placeholder={`回复 ${comment.author || 'ta'}…`}
+                  placeholder={t('comment.replyPlaceholder', {
+                    name: comment.author || t('common.ta'),
+                  })}
                   disabled={replySubmitting}
                   autoFocus
                 />
@@ -261,10 +265,10 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                   type="submit"
                   disabled={replySubmitting || !replyDraft.trim()}
                 >
-                  发送
+                  {t('common.send')}
                 </button>
                 <button type="button" className={styles.cancelReply} onClick={cancelReply}>
-                  取消
+                  {t('common.cancel')}
                 </button>
               </form>
             )}
@@ -274,7 +278,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                 {comment.replies.map((reply) => (
                   <li key={reply.id} className={styles.reply}>
                     <div className={styles.meta}>
-                      <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {reply.author || '匿名'}</span>
+                      <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {reply.author || t('common.anonymous')}</span>
                       <span className={styles.time}>· {formatRelativeTime(reply.createdAt)}</span>
                     </div>
 
@@ -288,7 +292,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                         />
                         <div className={styles.editActions}>
                           <button type="button" className={styles.cancel} onClick={cancelEditReply}>
-                            取消
+                            {t('common.cancel')}
                           </button>
                           <button
                             type="button"
@@ -296,7 +300,7 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                             onClick={() => handleSaveReplyEdit(comment, reply)}
                             disabled={submitting || !editReplyContent.trim()}
                           >
-                            保存
+                            {t('common.save')}
                           </button>
                         </div>
                       </div>
@@ -311,14 +315,14 @@ function Comments({ memoryId, comments: initialComments, isViewer }) {
                           className={styles.linkBtn}
                           onClick={() => startEditReply(reply)}
                         >
-                          编辑
+                          {t('common.edit')}
                         </button>
                         <button
                           type="button"
                           className={`${styles.linkBtn} ${styles.danger}`}
                           onClick={() => handleDeleteReply(comment, reply)}
                         >
-                          删除
+                          {t('common.delete')}
                         </button>
                       </div>
                     )}

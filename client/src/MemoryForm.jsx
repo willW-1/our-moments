@@ -1,15 +1,19 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { uploadImage, resolveImageUrl } from './api';
 import { ChevronDownIcon } from './components/icons';
+import { t, typeLabel, useT } from './i18n';
 import styles from './MemoryForm.module.css';
 
-// 与 MemoryCard 的 TYPE_ICONS 中文 key 保持一致
+// 与 MemoryCard 的 TYPE_ICONS 中文 key 保持一致。
+// 注意：这些中文是「存进数据库的值」，任何情况下都不能翻译——
+// 英文界面下只把显示文字换成 typeLabel()，选项 key / 选中判断 / 提交内容仍是中文。
 const TYPE_OPTIONS = ['学习', '旅行', '电影', '演唱会', '演出', '礼物', '综艺', '其他'];
 
 // 添加 / 编辑共用的表单弹窗
 // initial 为 null 表示新建；传 memory 对象则预填（编辑模式）
 // onSubmit(payload) 应返回 Promise，resolve 后自动关闭弹窗
 function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
+  useT(); // 订阅语言
   const fileInputId = useId();
   const typeWrapRef = useRef(null);
   // 自定义类型下拉：点外部 / Esc 关闭
@@ -53,7 +57,7 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
 
     const token = localStorage.getItem('token');
     if (!token) {
-      setError('登录已过期，请重新登录');
+      setError(t('memoryForm.errSessionExpired'));
       return;
     }
 
@@ -64,7 +68,7 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
       setImageKey(res.key);
       setImageUrl(res.getUrl);
     } catch (err) {
-      setUploadError(err.message || '图片上传失败');
+      setUploadError(err.message || t('error.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -76,11 +80,11 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
 
     // 表单验证：标题和日期必填
     if (!title.trim()) {
-      setError('标题不能为空');
+      setError(t('memoryForm.errTitleRequired'));
       return;
     }
     if (!date) {
-      setError('日期不能为空');
+      setError(t('memoryForm.errDateRequired'));
       return;
     }
 
@@ -98,9 +102,9 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
       onClose();
     } catch (err) {
       if (err.status === 401) {
-        setError('登录已过期，请重新登录');
+        setError(t('memoryForm.errSessionExpired'));
       } else {
-        setError(err.message || '保存失败，请稍后再试');
+        setError(err.message || t('memoryForm.errSaveFailed'));
       }
     } finally {
       setSubmitting(false);
@@ -118,7 +122,7 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
 
         {/* 自定义类型下拉：原生 <select> 的选项弹层是系统白底，深色主题下看不清；改用主题化的自定义菜单 */}
         <div className={`${styles.label} ${styles.typeField}`} ref={typeWrapRef}>
-          类型
+          {t('memoryForm.type')}
           <button
             type="button"
             className={`${styles.select} ${styles.typeBtn}`}
@@ -126,22 +130,23 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
             aria-expanded={typeOpen}
             onClick={() => setTypeOpen((o) => !o)}
           >
-            <span>{type}</span>
+            <span>{typeLabel(type)}</span>
             <ChevronDownIcon size={16} strokeWidth={2} />
           </button>
           {typeOpen && (
             <ul className={styles.typeMenu} role="listbox">
-              {TYPE_OPTIONS.map((t) => (
-                <li key={t} role="option" aria-selected={type === t}>
+              {/* option 是数据库里的中文值（key / 选中判断 / 提交都用它），只有显示文字翻译 */}
+              {TYPE_OPTIONS.map((value) => (
+                <li key={value} role="option" aria-selected={type === value}>
                   <button
                     type="button"
-                    className={`${styles.typeOption} ${type === t ? styles.typeOptionActive : ''}`}
+                    className={`${styles.typeOption} ${type === value ? styles.typeOptionActive : ''}`}
                     onClick={() => {
-                      setType(t);
+                      setType(value);
                       setTypeOpen(false);
                     }}
                   >
-                    {t}
+                    {typeLabel(value)}
                   </button>
                 </li>
               ))}
@@ -150,18 +155,18 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
         </div>
 
         <label className={styles.label}>
-          标题 <span className={styles.required}>*</span>
+          {t('memoryForm.title')} <span className={styles.required}>*</span>
           <input
             className={styles.input}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="例如：第一次去迪士尼"
+            placeholder={t('memoryForm.titlePlaceholder')}
           />
         </label>
 
         <label className={styles.label}>
-          日期 <span className={styles.required}>*</span>
+          {t('memoryForm.date')} <span className={styles.required}>*</span>
           <input
             className={styles.input}
             type="date"
@@ -171,29 +176,29 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
         </label>
 
         <label className={styles.label}>
-          地点
+          {t('memoryForm.location')}
           <input
             className={styles.input}
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="例如：上海迪士尼"
+            placeholder={t('memoryForm.locationPlaceholder')}
           />
         </label>
 
         <label className={styles.label}>
-          描述
+          {t('memoryForm.description')}
           <textarea
             className={styles.textarea}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="这段回忆的故事…"
+            placeholder={t('memoryForm.descriptionPlaceholder')}
             rows={3}
           />
         </label>
 
         <label className={styles.label}>
-          图片
+          {t('memoryForm.image')}
           <div className={styles.uploadArea}>
             {/* 原生 file input 视觉隐藏：避免浏览器自带的「未选择任何文件」小字，改由下方 label 按钮触发 */}
             <input
@@ -205,10 +210,14 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
               disabled={uploading}
             />
             {uploading ? (
-              <span className={styles.uploadHint}>上传中…</span>
+              <span className={styles.uploadHint}>{t('memoryForm.uploading')}</span>
             ) : imageUrl ? (
               <>
-                <img className={styles.preview} src={resolveImageUrl(imageUrl)} alt="图片预览" />
+                <img
+                  className={styles.preview}
+                  src={resolveImageUrl(imageUrl)}
+                  alt={t('memoryForm.imagePreviewAlt')}
+                />
                 <button
                   type="button"
                   className={styles.removeBtn}
@@ -217,13 +226,15 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
                     setImageUrl('');
                   }}
                 >
-                  移除图片
+                  {t('memoryForm.removeImage')}
                 </button>
               </>
             ) : (
               <>
-                <label htmlFor={fileInputId} className={styles.fileButton}>选择图片</label>
-                <span className={styles.uploadHint}>选择本地图片直传到 Filebase（不经过 Render）</span>
+                <label htmlFor={fileInputId} className={styles.fileButton}>
+                  {t('memoryForm.chooseImage')}
+                </label>
+                <span className={styles.uploadHint}>{t('memoryForm.uploadHint')}</span>
               </>
             )}
           </div>
@@ -237,7 +248,7 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
                 setImageUrl(e.target.value);
                 setImageKey('');
               }}
-              placeholder="或直接粘贴图片链接（留空则不带图）"
+              placeholder={t('memoryForm.imageUrlPlaceholder')}
             />
           )}
         </label>
@@ -246,10 +257,10 @@ function MemoryForm({ heading, submitLabel, initial, onSubmit, onClose }) {
 
         <div className={styles.actions}>
           <button type="button" className={styles.cancel} onClick={onClose}>
-            取消
+            {t('common.cancel')}
           </button>
           <button type="submit" className={styles.submit} disabled={submitting}>
-            {submitting ? '保存中…' : submitLabel}
+            {submitting ? t('common.saving') : submitLabel}
           </button>
         </div>
       </form>

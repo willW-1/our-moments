@@ -1,6 +1,8 @@
 // 后端 API 地址：
 //  - 本地开发（vite dev）：走 vite 代理到 localhost:3001
 //  - 生产构建：默认 Render，可用 VITE_API_URL 覆盖（构建时注入）
+import { t } from './i18n';
+
 export const API_BASE = import.meta.env.DEV
   ? ''
   : (import.meta.env.VITE_API_URL || 'https://our-moments-a8no.onrender.com');
@@ -15,7 +17,7 @@ export async function login(username, password) {
       body: JSON.stringify({ username, password }),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -31,7 +33,7 @@ export async function fetchMe(token) {
   const res = await fetch(`${API_BASE}/api/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error('token 无效');
+  if (!res.ok) throw new Error(t('error.invalidToken'));
   return res.json();
 }
 
@@ -57,7 +59,7 @@ export async function createMemory(token, data) {
       body: JSON.stringify(data),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -81,7 +83,7 @@ export async function updateMemory(token, id, data) {
       body: JSON.stringify(data),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -101,7 +103,7 @@ export async function deleteMemory(token, id) {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -129,7 +131,7 @@ export async function createComment(token, memoryId, content, parentId) {
       }),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -153,7 +155,7 @@ export async function updateComment(token, commentId, content) {
       body: JSON.stringify({ content }),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -181,7 +183,7 @@ export async function uploadImage(token, file) {
       body: JSON.stringify({ contentType, fileName: file.name }),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -197,10 +199,17 @@ export async function uploadImage(token, file) {
       headers: { 'Content-Type': data.contentType || contentType },
       body: file,
     });
-    if (!put.ok) throw new Error(`直传失败 HTTP ${put.status}`);
+    if (!put.ok) {
+      // 用错误码而不是文案来判断「是直传失败还是网络异常」：
+      // 文案会跟着语言变，拿它当哨兵早晚会静默失效
+      const err = new Error(t('error.uploadDirectFailed', { status: put.status }));
+      err.code = 'upload.directFailed';
+      err.status = put.status;
+      throw err;
+    }
   } catch (err) {
-    if (err instanceof Error && err.message.startsWith('直传失败')) throw err;
-    throw new Error('网络异常');
+    if (err && err.code === 'upload.directFailed') throw err;
+    throw new Error(t('error.network'));
   }
 
   return { key: data.key, getUrl: data.getUrl };
@@ -222,7 +231,7 @@ export async function deleteComment(token, commentId) {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -243,7 +252,7 @@ export async function fetchCountdowns(token) {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -266,7 +275,7 @@ export async function createCountdown(token, data) {
       body: JSON.stringify(data),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -289,7 +298,7 @@ export async function updateCountdown(token, id, data) {
       body: JSON.stringify(data),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -308,7 +317,7 @@ export async function deleteCountdown(token, id) {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -329,7 +338,7 @@ export async function fetchMessages(token) {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -352,7 +361,7 @@ export async function createMessage(token, data) {
       body: JSON.stringify(data),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -375,7 +384,7 @@ export async function updateMessage(token, id, data) {
       body: JSON.stringify(data),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -394,7 +403,7 @@ export async function deleteMessage(token, id) {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -420,7 +429,7 @@ export async function createMessageReply(token, messageId, content) {
       body: JSON.stringify({ content }),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -444,7 +453,7 @@ export async function updateMessageReply(token, replyId, content) {
       body: JSON.stringify({ content }),
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -464,7 +473,7 @@ export async function deleteMessageReply(token, replyId) {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch {
-    throw new Error('网络异常');
+    throw new Error(t('error.network'));
   }
   const result = await res.json().catch(() => ({}));
   if (!res.ok) {

@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import styles from './MemoryCard.module.css';
 import Comments from '../Comments/Comments';
 import useRevealOnScroll from '../../useRevealOnScroll';
-import { formatRelativeTime } from '../../formatTime';
+import { formatLocalDate, formatRelativeTime } from '../../formatTime';
 import { resolveImageUrl } from '../../api';
+import { t, useT } from '../../i18n';
 import {
   HeartIcon, PlaneIcon, GiftIcon, FilmIcon, GraduationIcon, TvIcon, TicketIcon, TagIcon,
   ClockIcon, UserIcon, PinIcon, CloseIcon,
@@ -31,6 +32,7 @@ const TYPE_ICONS = {
 };
 
 function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
+  useT(); // 订阅语言（相对时间 / 日期格式 / 按钮文案都跟着切）
   const { type, title, date, location, description, imageUrl, author, createdAt, comments } = memory;
   const TypeIcon = TYPE_ICONS[type] || TYPE_ICONS.other;
   // 滚动进入视口逐步显现：初始透明 + 稍下移，进入后过渡到完全显示
@@ -48,16 +50,6 @@ function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [zoomed]);
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    try {
-      const d = new Date(dateStr);
-      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-    } catch {
-      return dateStr;
-    }
-  };
-
   return (
     <div
       ref={cardRef}
@@ -69,16 +61,16 @@ function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
           <button
             className={styles.actionBtn}
             onClick={() => onEdit(memory)}
-            title="编辑这条回忆"
+            title={t('memoryCard.editTitle')}
           >
-            编辑
+            {t('common.edit')}
           </button>
           <button
             className={`${styles.actionBtn} ${styles.deleteBtn}`}
             onClick={() => onDelete(memory)}
-            title="删除这条回忆"
+            title={t('memoryCard.deleteTitle')}
           >
-            删除
+            {t('common.delete')}
           </button>
         </div>
       )}
@@ -86,8 +78,11 @@ function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
         <div className={styles.iconArea}>{TypeIcon && <TypeIcon size={26} strokeWidth={1.7} />}</div>
         <div className={styles.content}>
           <h3 className={styles.title}>{title}</h3>
-          <p className={styles.date}>{formatDate(date)}</p>
-          <p className={styles.publishTime}><ClockIcon size={12} strokeWidth={1.8} /> 发布于 {formatRelativeTime(createdAt)}</p>
+          <p className={styles.date}>{formatLocalDate(date)}</p>
+          <p className={styles.publishTime}>
+            <ClockIcon size={12} strokeWidth={1.8} /> {t('memoryCard.postedAt')}{' '}
+            {formatRelativeTime(createdAt)}
+          </p>
           {author && (
             <p className={styles.author}><UserIcon size={13} strokeWidth={1.8} /> {author}</p>
           )}
@@ -120,7 +115,7 @@ function MemoryCard({ memory, onEdit, onDelete, isViewer }) {
                 type="button"
                 className={styles.zoomClose}
                 onClick={() => setZoomed(false)}
-                aria-label="关闭"
+                aria-label={t('common.close')}
               >
                 <CloseIcon size={18} />
               </button>

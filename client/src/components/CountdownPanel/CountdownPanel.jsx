@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { fetchCountdowns, createCountdown, updateCountdown, deleteCountdown } from '../../api';
 import { ClockIcon, PlusIcon } from '../icons';
 import Reveal from '../Reveal/Reveal';
+import { t, tCount, useT } from '../../i18n';
+import { formatLocalDate } from '../../formatTime';
 import styles from './CountdownPanel.module.css';
 
 // 目标日期在未来的 → 倒计时「还有 N 天」；在过去的 → 正计时「已经 N 天」
@@ -16,14 +18,8 @@ function daysFromNow(dateStr) {
   return Math.round((targetDay - today) / 86400000);
 }
 
-// 显示目标日期，如「2026年8月15日」
-function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-}
-
 function CountdownPanel({ isViewer }) {
+  useT(); // 订阅语言（倒计时名字是用户写的，不翻译）
   const [countdowns, setCountdowns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,7 +40,7 @@ function CountdownPanel({ isViewer }) {
     try {
       setCountdowns(await fetchCountdowns(token));
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '加载失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('countdown.errLoad'));
     } finally {
       setLoading(false);
     }
@@ -81,11 +77,11 @@ function CountdownPanel({ isViewer }) {
     e.preventDefault();
     if (submitting) return;
     if (!formName.trim()) {
-      setFormError('主题名不能为空');
+      setFormError(t('countdown.errNameRequired'));
       return;
     }
     if (!formDate) {
-      setFormError('请选择目标日期');
+      setFormError(t('countdown.errDateRequired'));
       return;
     }
     setSubmitting(true);
@@ -100,38 +96,47 @@ function CountdownPanel({ isViewer }) {
       closeModal();
       await load();
     } catch (err) {
-      setFormError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '保存失败');
+      setFormError(err.status === 401 ? t('app.sessionExpired') : err.message || t('countdown.errSave'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (c) => {
-    if (!window.confirm(`确定删除「${c.name}」这个倒计时吗？`)) return;
+    if (!window.confirm(t('countdown.confirmDelete', { name: c.name }))) return;
     try {
       await deleteCountdown(getToken(), c.id);
       await load();
     } catch (err) {
-      alert(err.message || '删除失败');
+      alert(err.message || t('countdown.errDelete'));
     }
   };
 
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <span className={styles.title}><ClockIcon size={16} strokeWidth={1.8} /> 倒计时</span>
+        <span className={styles.title}>
+          <ClockIcon size={16} strokeWidth={1.8} /> {t('countdown.title')}
+        </span>
         {/* 旁观者不显示添加按钮 */}
         {!isViewer && (
-          <button type="button" className={styles.addBtn} onClick={openAdd} title="添加倒计时">
+          <button
+            type="button"
+            className={styles.addBtn}
+            onClick={openAdd}
+            title={t('countdown.addTitle')}
+          >
             <PlusIcon size={16} strokeWidth={2} />
           </button>
         )}
       </div>
 
-      {loading && <p className={styles.status}>加载中…</p>}
+      {loading && <p className={styles.status}>{t('common.loading')}</p>}
       {!loading && error && <p className={`${styles.status} ${styles.errorText}`}>{error}</p>}
       {!loading && !error && countdowns.length === 0 && (
-        <p className={styles.status}>{isViewer ? '还没有倒计时' : '还没有倒计时，点 ＋ 添加一个'}</p>
+        <p className={styles.status}>
+          {isViewer ? t('countdown.emptyViewer') : t('countdown.empty')}
+        </p>
       )}
 
       <ul className={styles.list}>
@@ -145,27 +150,35 @@ function CountdownPanel({ isViewer }) {
                 ) : (
                   <>
                     <span className={styles.days}>{Math.abs(days)}</span>
-                    <span className={styles.daysUnit}>天</span>
+                    <span className={styles.daysUnit}>
+                      {tCount('countdown.daysUnit', Math.abs(days))}
+                    </span>
                   </>
                 )}
               </div>
               <div className={styles.info}>
+                {/* 目标名 c.name 是用户自己写的，只翻译外面这层句式 */}
                 <p className={styles.name}>
-                  {days === null ? c.name : days > 0 ? `距离「${c.name}」还有` : days === 0 ? `「${c.name}」就是今天` : `距离「${c.name}」已经`}
+                  {days === null
+                    ? c.name
+                    : t(
+                        days > 0 ? 'countdown.future' : days === 0 ? 'countdown.today' : 'countdown.past',
+                        { name: c.name },
+                      )}
                 </p>
-                <p className={styles.date}>{formatDate(c.targetDate)}</p>
+                <p className={styles.date}>{formatLocalDate(c.targetDate)}</p>
               </div>
               {!isViewer && (
                 <div className={styles.actions}>
                   <button type="button" className={styles.linkBtn} onClick={() => openEdit(c)}>
-                    编辑
+                    {t('common.edit')}
                   </button>
                   <button
                     type="button"
                     className={`${styles.linkBtn} ${styles.danger}`}
                     onClick={() => handleDelete(c)}
                   >
-                    删除
+                    {t('common.delete')}
                   </button>
                 </div>
               )}
@@ -184,19 +197,21 @@ function CountdownPanel({ isViewer }) {
               onSubmit={handleSubmit}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className={styles.modalTitle}>{editing ? '编辑倒计时' : '添加倒计时'}</h3>
+              <h3 className={styles.modalTitle}>
+                {editing ? t('countdown.editTitle') : t('countdown.addTitle')}
+              </h3>
               <label className={styles.label}>
-                主题名
+                {t('countdown.nameLabel')}
                 <input
                   className={styles.input}
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="如：纪念日 / 生日"
+                  placeholder={t('countdown.namePlaceholder')}
                 />
               </label>
               <label className={styles.label}>
-                目标日期
+                {t('countdown.dateLabel')}
                 <input
                   className={styles.input}
                   type="date"
@@ -207,10 +222,10 @@ function CountdownPanel({ isViewer }) {
               {formError && <p className={styles.error}>{formError}</p>}
               <div className={styles.modalActions}>
                 <button type="button" className={styles.cancel} onClick={closeModal}>
-                  取消
+                  {t('common.cancel')}
                 </button>
                 <button type="submit" className={styles.save} disabled={submitting}>
-                  {submitting ? '保存中…' : '保存'}
+                  {submitting ? t('common.saving') : t('common.save')}
                 </button>
               </div>
             </form>

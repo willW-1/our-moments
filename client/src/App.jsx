@@ -9,8 +9,10 @@ import MessageBoard from './components/MessageBoard/MessageBoard';
 import WelcomeModal from './components/WelcomeModal/WelcomeModal';
 import ParticleField from './components/ParticleField/ParticleField';
 import ThemeToggle from './components/ThemeToggle/ThemeToggle';
+import LanguageToggle from './components/LanguageToggle/LanguageToggle';
 import { HeartLogo, ClockIcon, CameraIcon, ChatIcon, PlusIcon } from './components/icons';
 import { fetchMe, fetchMemories, deleteMemory } from './api';
+import { t, useT } from './i18n';
 
 // 背景装饰层：渐变底 + 三层柔光斑（.bg 由 App.css 定义，z-index:-1 沉到内容之下）
 const appBg = (
@@ -22,17 +24,19 @@ const appBg = (
 );
 
 // 页脚：技术栈小字 + 特别鸣谢大字（登录前后都显示在页面最下方）
-const appFooter = (
-  <footer className="app-footer">
-    <p className="footer-tech">
-      本页面使用 Claude + DeepSeek vibe coding 而成 · 前端挂载于腾讯 EdgeOne Pages · 数据库由 Aiven
-      支持 · 后端挂载于 Render · 上传的图片存储于 Filebase
-    </p>
-    <p className="footer-thanks">本网站由 Will Wang 开发</p>
-  </footer>
-);
+// 单独做成组件是为了跟着语言切换重渲染（useT 订阅语言）
+function Footer() {
+  useT();
+  return (
+    <footer className="app-footer">
+      <p className="footer-tech">{t('footer.tech')}</p>
+      <p className="footer-thanks">{t('footer.thanks')}</p>
+    </footer>
+  );
+}
 
 function App() {
+  useT(); // 订阅语言：切换语言时整个 App 重渲染
   // 登录状态：checking（正在验证 token）/ loggedIn / loggedOut
   const [authState, setAuthState] = useState('checking');
   const [memories, setMemories] = useState([]);
@@ -107,7 +111,7 @@ function App() {
       })
       .catch((err) => {
         console.error('加载 memories 失败:', err);
-        if (!cancelled) setError(`加载失败：${err.message}`);
+        if (!cancelled) setError(t('app.loadFailed', { message: err.message }));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -130,18 +134,18 @@ function App() {
   const handleEdit = (memory) => setEditingMemory(memory);
 
   const handleDelete = async (memory) => {
-    const ok = window.confirm(`确定删除「${memory.title}」这条回忆吗？删除后无法恢复。`);
+    const ok = window.confirm(t('app.deleteConfirm', { title: memory.title }));
     if (!ok) return;
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('登录状态已失效，请重新登录');
+      alert(t('app.sessionExpired'));
       return;
     }
     try {
       await deleteMemory(token, memory.id);
       setRefreshKey((k) => k + 1); // 刷新列表
     } catch (err) {
-      alert(err.message || '删除失败，请稍后再试');
+      alert(err.message || t('app.deleteFailed'));
     }
   };
 
@@ -154,9 +158,11 @@ function App() {
       <div className="app app-guest">
         {appBg}
         <ParticleField theme={theme} />
+        {/* 登录页没有顶栏，语言切换固定在左上角 */}
+        <LanguageToggle variant="fixed" />
         <Login onLoginSuccess={handleLoggedIn} />
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
-        {appFooter}
+        <Footer />
       </div>
     );
   }
@@ -171,9 +177,10 @@ function App() {
         <header className="app-header">
           <span className="app-logo"><HeartLogo size={26} /></span>
           <span className="app-title">Memories</span>
-          <span className="app-nav">回忆</span>
+          <LanguageToggle />
+          <span className="app-nav">{t('header.nav')}</span>
           {authState === 'loggedIn' && (
-            <span className="app-logout" onClick={handleLogout}>退出</span>
+            <span className="app-logout" onClick={handleLogout}>{t('header.logout')}</span>
           )}
         </header>
         {/* 手机端顶部 Tab：倒计时 / 回忆 / 留言板（桌面不显示） */}
@@ -183,26 +190,26 @@ function App() {
             className={`tab-btn ${mobileTab === 'countdown' ? 'active' : ''}`}
             onClick={() => setMobileTab('countdown')}
           >
-            <ClockIcon size={16} /> 倒计时
+            <ClockIcon size={16} /> {t('tabs.countdown')}
           </button>
           <button
             type="button"
             className={`tab-btn ${mobileTab === 'memories' ? 'active' : ''}`}
             onClick={() => setMobileTab('memories')}
           >
-            <CameraIcon size={16} /> 回忆
+            <CameraIcon size={16} /> {t('tabs.memories')}
           </button>
           <button
             type="button"
             className={`tab-btn ${mobileTab === 'messages' ? 'active' : ''}`}
             onClick={() => setMobileTab('messages')}
           >
-            <ChatIcon size={16} /> 留言板
+            <ChatIcon size={16} /> {t('tabs.messages')}
           </button>
         </nav>
       </div>
-      {authState === 'checking' && <p className="app-status">加载中…</p>}
-      {authState === 'loggedIn' && loading && <p className="app-status">加载中…</p>}
+      {authState === 'checking' && <p className="app-status">{t('common.loading')}</p>}
+      {authState === 'loggedIn' && loading && <p className="app-status">{t('common.loading')}</p>}
       {authState === 'loggedIn' && error && <p className="app-status app-error">{error}</p>}
       {authState === 'loggedIn' && !loading && !error && (
         <div className="app-body">
@@ -224,7 +231,7 @@ function App() {
       )}
       {/* 旁观者不显示添加回忆的 ＋ 按钮 */}
       {authState === 'loggedIn' && !isViewer && (
-        <button className="fab" onClick={() => setShowAdd(true)} title="添加回忆">
+        <button className="fab" onClick={() => setShowAdd(true)} title={t('header.addMemory')}>
           <PlusIcon size={24} strokeWidth={2.2} />
         </button>
       )}
@@ -251,7 +258,7 @@ function App() {
       {authState === 'loggedIn' && showWelcome && (
         <WelcomeModal username={username} onClose={() => setShowWelcome(false)} />
       )}
-      {authState === 'loggedIn' && appFooter}
+      {authState === 'loggedIn' && <Footer />}
     </div>
   );
 }

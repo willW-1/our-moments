@@ -11,10 +11,12 @@ import {
 import { formatDateTime } from '../../formatTime';
 import { ChatIcon, UserIcon } from '../icons';
 import Reveal from '../Reveal/Reveal';
+import { t, useT } from '../../i18n';
 import styles from './MessageBoard.module.css';
 
 // 留言板：每条留言显示内容 + 日期 + 作者，支持一层回复
 function MessageBoard({ isViewer }) {
+  useT(); // 订阅语言（留言内容本身是用户写的，不翻译）
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,7 +42,7 @@ function MessageBoard({ isViewer }) {
     try {
       setMessages(await fetchMessages(token));
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '加载失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('board.errLoad'));
     } finally {
       setLoading(false);
     }
@@ -61,7 +63,7 @@ function MessageBoard({ isViewer }) {
       setMessages((prev) => [{ ...created, replies: [] }, ...prev]);
       setDraft('');
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '留言失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('board.errCreate'));
     } finally {
       setSubmitting(false);
     }
@@ -87,19 +89,19 @@ function MessageBoard({ isViewer }) {
       setEditingId(null);
       setEditContent('');
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '保存失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('board.errSave'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (msg) => {
-    if (!window.confirm('确定删除这条留言吗？其下回复会一并删除。')) return;
+    if (!window.confirm(t('board.confirmDelete'))) return;
     try {
       await deleteMessage(getToken(), msg.id);
       setMessages((prev) => prev.filter((m) => m.id !== msg.id));
     } catch (err) {
-      alert(err.message || '删除失败');
+      alert(err.message || t('board.errDelete'));
     }
   };
 
@@ -126,7 +128,7 @@ function MessageBoard({ isViewer }) {
       setReplyingTo(null);
       setReplyDraft('');
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '回复失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('board.errReply'));
     } finally {
       setReplySubmitting(false);
     }
@@ -163,14 +165,14 @@ function MessageBoard({ isViewer }) {
       setEditingReplyId(null);
       setEditReplyContent('');
     } catch (err) {
-      setError(err.status === 401 ? '登录已过期，请重新登录' : err.message || '保存失败');
+      setError(err.status === 401 ? t('app.sessionExpired') : err.message || t('board.errSave'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteReply = async (msg, reply) => {
-    if (!window.confirm('确定删除这条回复吗？')) return;
+    if (!window.confirm(t('board.confirmReplyDelete'))) return;
     try {
       await deleteMessageReply(getToken(), reply.id);
       setMessages((prev) =>
@@ -181,14 +183,16 @@ function MessageBoard({ isViewer }) {
         )
       );
     } catch (err) {
-      alert(err.message || '删除失败');
+      alert(err.message || t('board.errDelete'));
     }
   };
 
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <span className={styles.title}><ChatIcon size={16} strokeWidth={1.8} /> 留言板</span>
+        <span className={styles.title}>
+          <ChatIcon size={16} strokeWidth={1.8} /> {t('board.title')}
+        </span>
       </div>
 
       <form className={styles.addForm} onSubmit={handleAdd}>
@@ -197,25 +201,25 @@ function MessageBoard({ isViewer }) {
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="写下想说的话…"
+          placeholder={t('board.placeholder')}
           disabled={submitting}
         />
         <button className={styles.submit} type="submit" disabled={submitting || !draft.trim()}>
-          留言
+          {t('board.submit')}
         </button>
       </form>
 
-      {loading && <p className={styles.status}>加载中…</p>}
+      {loading && <p className={styles.status}>{t('common.loading')}</p>}
       {!loading && error && <p className={`${styles.status} ${styles.errorText}`}>{error}</p>}
       {!loading && !error && messages.length === 0 && (
-        <p className={styles.status}>还没有留言，来留个言吧～</p>
+        <p className={styles.status}>{t('board.empty')}</p>
       )}
 
       <ul className={styles.list}>
         {messages.map((msg) => (
           <Reveal as="li" key={msg.id} className={styles.item}>
             <div className={styles.meta}>
-              <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {msg.author || '匿名'}</span>
+              <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {msg.author || t('common.anonymous')}</span>
               <span className={styles.time}>{formatDateTime(msg.createdAt)}</span>
             </div>
 
@@ -229,7 +233,7 @@ function MessageBoard({ isViewer }) {
                 />
                 <div className={styles.editActions}>
                   <button type="button" className={styles.cancel} onClick={cancelEdit}>
-                    取消
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="button"
@@ -237,7 +241,7 @@ function MessageBoard({ isViewer }) {
                     onClick={() => handleSaveEdit(msg)}
                     disabled={submitting || !editContent.trim()}
                   >
-                    保存
+                    {t('common.save')}
                   </button>
                 </div>
               </div>
@@ -249,20 +253,20 @@ function MessageBoard({ isViewer }) {
               <div className={styles.itemActions}>
                 {/* 旁观者也可以回复留言 */}
                 <button type="button" className={styles.linkBtn} onClick={() => startReply(msg)}>
-                  回复
+                  {t('common.reply')}
                 </button>
                 {/* 旁观者不显示编辑/删除 */}
                 {!isViewer && (
                   <>
                     <button type="button" className={styles.linkBtn} onClick={() => startEdit(msg)}>
-                      编辑
+                      {t('common.edit')}
                     </button>
                     <button
                       type="button"
                       className={`${styles.linkBtn} ${styles.danger}`}
                       onClick={() => handleDelete(msg)}
                     >
-                      删除
+                      {t('common.delete')}
                     </button>
                   </>
                 )}
@@ -282,7 +286,9 @@ function MessageBoard({ isViewer }) {
                   type="text"
                   value={replyDraft}
                   onChange={(e) => setReplyDraft(e.target.value)}
-                  placeholder={`回复 ${msg.author || 'ta'}…`}
+                  placeholder={t('board.replyPlaceholder', {
+                    name: msg.author || t('common.ta'),
+                  })}
                   disabled={replySubmitting}
                   autoFocus
                 />
@@ -291,10 +297,10 @@ function MessageBoard({ isViewer }) {
                   type="submit"
                   disabled={replySubmitting || !replyDraft.trim()}
                 >
-                  发送
+                  {t('common.send')}
                 </button>
                 <button type="button" className={styles.cancelReply} onClick={cancelReply}>
-                  取消
+                  {t('common.cancel')}
                 </button>
               </form>
             )}
@@ -304,7 +310,7 @@ function MessageBoard({ isViewer }) {
                 {msg.replies.map((reply) => (
                   <li key={reply.id} className={styles.reply}>
                     <div className={styles.meta}>
-                      <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {reply.author || '匿名'}</span>
+                      <span className={styles.author}><UserIcon size={12} strokeWidth={1.8} /> {reply.author || t('common.anonymous')}</span>
                       <span className={styles.time}>{formatDateTime(reply.createdAt)}</span>
                     </div>
 
@@ -318,7 +324,7 @@ function MessageBoard({ isViewer }) {
                         />
                         <div className={styles.editActions}>
                           <button type="button" className={styles.cancel} onClick={cancelEditReply}>
-                            取消
+                            {t('common.cancel')}
                           </button>
                           <button
                             type="button"
@@ -326,7 +332,7 @@ function MessageBoard({ isViewer }) {
                             onClick={() => handleSaveReplyEdit(msg, reply)}
                             disabled={submitting || !editReplyContent.trim()}
                           >
-                            保存
+                            {t('common.save')}
                           </button>
                         </div>
                       </div>
@@ -341,14 +347,14 @@ function MessageBoard({ isViewer }) {
                           className={styles.linkBtn}
                           onClick={() => startEditReply(reply)}
                         >
-                          编辑
+                          {t('common.edit')}
                         </button>
                         <button
                           type="button"
                           className={`${styles.linkBtn} ${styles.danger}`}
                           onClick={() => handleDeleteReply(msg, reply)}
                         >
-                          删除
+                          {t('common.delete')}
                         </button>
                       </div>
                     )}

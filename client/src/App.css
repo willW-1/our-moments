@@ -216,7 +216,9 @@ body {
   font-size: 21px;
   font-weight: 700;
   letter-spacing: 0.6px;
-  flex: 1;
+  /* 不再独占剩余空间：让语言切换按钮能紧贴在标题右侧，
+     多余空间由该按钮的 margin-right:auto 吃掉，把导航/退出顶到最右 */
+  flex: 0 1 auto;
   min-width: 0;
   /* 单行 + 超出省略：窄屏时标题收缩为省略号，杜绝文字溢出压住 logo / 导航 */
   white-space: nowrap;

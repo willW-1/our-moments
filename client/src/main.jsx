@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './themes.css';
+import { initLanguage } from './i18n';
 
 // 日夜主题：luxe=星河暗夜（默认），luxe-day=星河白昼。
 // 读取 localStorage 在 React 挂载前设置，避免首屏闪白 / 闪错主题。
@@ -9,6 +10,10 @@ import './themes.css';
 const saved = localStorage.getItem('our-moments-theme');
 const theme = saved === 'luxe-day' ? 'luxe-day' : 'luxe';
 document.documentElement.setAttribute('data-theme', theme);
+
+// 语言：同样在挂载前落一次 <html lang> / data-lang（语言本身在 i18n store 里，
+// 组件通过 useT() 读取，不存在首屏语言闪烁）
+initLanguage();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -1,0 +1,56 @@
+/* 中英文切换：胶囊按钮，配色全部走主题变量，两套主题通用 */
+
+.header {
+  flex-shrink: 0; /* 窄屏不被压扁 */
+  /* 顶栏里由它吃掉多余空间，把「回忆」胶囊和退出按钮顶到最右 */
+  margin-right: auto;
+  min-width: 46px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.header:hover {
+  background: var(--accent-softer);
+}
+
+/* 登录页：固定左上角，与左下角的日夜切换按钮形成对角 */
+.fixed {
+  position: fixed;
+  left: 22px;
+  top: 22px;
+  z-index: 150;
+  min-width: 52px;
+  padding: 10px 16px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  backdrop-filter: var(--panel-blur);
+  -webkit-backdrop-filter: var(--panel-blur);
+  box-shadow: var(--panel-shadow);
+  color: var(--accent-strong);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fixed:hover {
+  transform: scale(1.06);
+}
+
+.fixed:active {
+  transform: scale(0.96);
+}
