@@ -141,6 +141,13 @@ body {
   position: relative;
 }
 
+/* 未登录页：整页恰好一屏——登录卡片占据中间的弹性区域，页脚贴底，无需滚动 */
+.app-guest {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+
 /* ===== 顶部整体（header + 手机端 Tab）：整块吸顶 ===== */
 .app-top {
   position: sticky;

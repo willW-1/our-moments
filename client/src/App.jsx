@@ -149,8 +149,9 @@ function App() {
   const isViewer = role === 'viewer';
 
   if (authState === 'loggedOut') {
+    // app-guest：整页按视口高度做纵向弹性布局，登录卡片与页脚同屏，无需滚动
     return (
-      <div className="app">
+      <div className="app app-guest">
         {appBg}
         <ParticleField theme={theme} />
         <Login onLoginSuccess={handleLoggedIn} />

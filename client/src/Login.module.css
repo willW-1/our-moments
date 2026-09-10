@@ -1,6 +1,8 @@
-/* 登录页：苹果官网式居中卡片 */
+/* 登录页：苹果官网式居中卡片
+   父级 .app-guest 已是「整页高的纵向 flex」，这里用 flex:1 占满剩余空间即可居中。
+   注意不要再写 min-height:100vh——那会和页脚叠加成一屏多，导致必须滚动才能看到页脚 */
 .page {
-  min-height: 100vh;
+  flex: 1 0 auto; /* 不收缩：窗口极矮时宁可整页滚动，也不把卡片压扁 */
   display: flex;
   align-items: center;
   justify-content: center;
